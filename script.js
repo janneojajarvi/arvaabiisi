@@ -208,11 +208,34 @@ function appendNoteToAbc(pitch, duration) {
 // Globaalit muuttujat syöttöä varten
 let selectedDuration = "1";
 
+// --- SOVELLUKSEN TAPAHTUMANKÄSITTELIJÄT ---
+
 document.addEventListener('DOMContentLoaded', () => {
-    const abcEditor = document.querySelector('textarea'); // Varmista että täsmää id/luokkaan
-    
-    // 1. Keston valinnan hallinta
+    const abcEditor = document.getElementById('searchQuery');
+    const clearBtn = document.getElementById('clearSearch');
     const durBtns = document.querySelectorAll('.dur-btn');
+    const noteBtns = document.querySelectorAll('.note-btn');
+
+    // 1. Alustetaan haku ja lataus
+    initApp();
+
+    if (abcEditor) {
+        abcEditor.addEventListener('input', handleSearch);
+    }
+
+    // 2. Tyhjennä-painikkeen toiminnallisuus
+    if (clearBtn && abcEditor) {
+        clearBtn.addEventListener('click', () => {
+            abcEditor.value = ""; // Tyhjennetään teksti
+            abcEditor.focus();    // Palautetaan kursori kenttään
+            
+            // Päivitetään nuottikuva ja hakutulokset tyhjiksi
+            const event = new Event('input', { bubbles: true });
+            abcEditor.dispatchEvent(event);
+        });
+    }
+
+    // 3. Keston valinnan hallinta (Neljäs, Puoli, jne.)
     durBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             durBtns.forEach(b => b.classList.remove('active'));
@@ -221,56 +244,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 2. Nuottien syöttö paneelista
-   const noteBtns = document.querySelectorAll('.note-btn');
-noteBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const note = btn.getAttribute('data-note');
-        const abcEditor = document.getElementById('searchQuery'); // Varmista, että ID on oikea (Gistissäsi se on searchQuery)
-        
-        if (!abcEditor) return;
+    // 4. Nuottien syöttö pianonapeista (C, D, E, jne.)
+    noteBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const note = btn.getAttribute('data-note');
+            
+            if (!abcEditor) return;
 
-        // Rakennetaan nuotti valitulla kestolla
-        const noteString = note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
-        
-        // 1. Lisätään teksti kursorin kohdalle
-        const start = abcEditor.selectionStart;
-        const end = abcEditor.selectionEnd;
-        const text = abcEditor.value;
-        abcEditor.value = text.slice(0, start) + noteString + text.slice(end);
-        
-        // 2. Siirretään kursori uuden nuotin perään
-        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-        abcEditor.focus();
+            // Rakennetaan nuottimerkkijono valitulla kestolla
+            const noteString = note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
+            
+            // Lisätään teksti kursorin kohdalle (ei pyyhi olemassa olevaa tekstiä)
+            const start = abcEditor.selectionStart;
+            const end = abcEditor.selectionEnd;
+            const text = abcEditor.value;
+            
+            abcEditor.value = text.slice(0, start) + noteString + text.slice(end);
+            
+            // Siirretään kursori uuden nuotin perään
+            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            abcEditor.focus();
 
-        // --- TÄRKEÄ KORJAUS ---
-        // 3. Kutsutaan funktiota, joka piirtää nuotit viivastolle
-        if (typeof processAbc === 'function') {
-            processAbc();
-        }
-        
-        // 4. Jos kyseessä on hakukenttä, laukaistaan myös haku manuaalisesti
-        // (Tämä varmistaa, että hakutulokset päivittyvät heti)
-        const event = new Event('input', { bubbles: true });
-        abcEditor.dispatchEvent(event);
-         
+            // Laukaistaan haku ja esikatselun päivitys
+            const event = new Event('input', { bubbles: true });
+            abcEditor.dispatchEvent(event);
         });
     });
 });
 
-
-
-// Rekisteröidään Service Worker heti
+// --- SERVICE WORKER REKISTERÖINTI ---
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker rekisteröity!', reg))
-        .catch(err => console.log('Service Worker virhe:', err));
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker rekisteröity onnistuneesti!', reg.scope))
+            .catch(err => console.log('Service Worker rekisteröintivirhe:', err));
+    });
 }
-// 5. Käynnistys kun sivu on ladattu
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    const searchInput = document.getElementById('searchQuery');
-    if (searchInput) {
-        searchInput.addEventListener('input', handleSearch);
-    }
-});
