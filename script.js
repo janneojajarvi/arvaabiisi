@@ -166,29 +166,27 @@ function handleSearch() {
         return;
     }
 
-    // 1. Luodaan hakusormenjälki
     let rawFP = getFingerprint(input);
     if (!rawFP) return;
 
-    // 2. Siivotaan hakusana: poistetaan reunaputket | alusta ja lopusta
-    // Näin " |5:1|0:1| " muuttuu muotoon " 5:1|0:1 "
-    let searchFP = rawFP.split('|').filter(x => x.length > 0).join('|');
-    
-    if (!searchFP) return;
+    // OTETAAN VAIN INTERVALLIT (esim. "|5:1|-3:0.5|" -> "5|-3")
+    let searchIntervals = rawFP.split('|')
+                               .filter(x => x.length > 0)
+                               .map(x => x.split(':')[0])
+                               .join('|');
 
-    // 3. Suodatetaan kirjasto
     const matches = window.melodyLibrary.filter(t => {
-    if (!t.fingerprint) return false;
-    
-    // Poistetaan kesto-suhteet sormenjäljistä vertailun ajaksi
-    // Muuttaa " -3:0.3|5:1 " -> " -3|5 "
-    const cleanLibFP = t.fingerprint.split('|').map(part => part.split(':')[0]).join('|');
-    const cleanSearchFP = searchFP.split('|').map(part => part.split(':')[0]).join('|');
-    
-    return cleanLibFP.includes(cleanSearchFP);
-});
+        if (!t.fingerprint) return false;
+        
+        // Puhdistetaan myös kirjaston sormenjälki kestoista vertailun ajaksi
+        let libIntervals = t.fingerprint.split('|')
+                                       .filter(x => x.length > 0)
+                                       .map(x => x.split(':')[0])
+                                       .join('|');
+        
+        return libIntervals.includes(searchIntervals);
+    });
 
-    // 4. Päivitetään käyttöliittymä
     const list = document.getElementById('results-list');
     document.getElementById('match-count').innerText = matches.length;
     list.innerHTML = "";
@@ -199,7 +197,6 @@ function handleSearch() {
         div.innerHTML = `<h3>${tune.name}</h3>`;
         div.onclick = () => {
             ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
-            // Skrollataan alas näyttämään nuotit
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         };
         list.appendChild(div);
