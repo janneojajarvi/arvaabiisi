@@ -109,17 +109,12 @@ function getFingerprint(abc) {
     for (let i = 1; i < notes.length; i++) {
         let interval = notes[i].pitch - notes[i-1].pitch;
         
-        // Lasketaan kesto-suhde
+        // Lasketaan suhde
         let ratio = notes[i].duration / notes[i-1].duration;
         
-        // Normalisoidaan suhde: pyöristetään se järkevästi.
-        // Tämä varmistaa, että 1.0001 ja 0.9999 ovat molemmat "1"
-        let durRatio;
-        if (ratio >= 1) {
-            durRatio = Math.round(ratio * 10) / 10; // Esim. 1.5 tai 2.0
-        } else {
-            durRatio = (Math.round(ratio * 10) / 10).toFixed(1); // Esim. 0.5 tai 0.3
-        }
+        // Pyöristetään suhde yhteen desimaaliin.
+        // Esim. 0.333 -> 0.3 ja 3.0 -> 3
+        let durRatio = Number(ratio.toFixed(1));
         
         fp.push(`${interval}:${durRatio}`);
     }
@@ -239,15 +234,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let dur = selectedDuration; // Oletus: valittu kesto (1, 2, /2, /4)
         
         if (isDottedMode && note !== 'z') {
-            // Lasketaan pisteellinen kesto matemaattisesti
+            // Lasketaan pisteellinen kesto matemaattisesti suhteessa valittuun kestoon
             if (selectedDuration === "1") {
-                dur = "3/2"; // Pisteellinen neljäsosa
+                dur = "3/2"; // Pisteellinen neljäsosa (1.5)
             } else if (selectedDuration === "2") {
-                dur = "3";   // Pisteellinen puolinuotti (2 + 1)
+                dur = "3";   // Pisteellinen puolinuotti (3.0)
             } else if (selectedDuration === "/2") {
-                dur = "3/4"; // Pisteellinen kahdeksasosa
+                dur = "3/4"; // Pisteellinen kahdeksasosa (0.75)
             } else if (selectedDuration === "/4") {
-                dur = "3/8"; // Pisteellinen 16-osanuotti
+                dur = "3/8"; // Pisteellinen 16-osanuotti (0.375)
             }
             
             // Nollataan piste-tila käytön jälkeen
