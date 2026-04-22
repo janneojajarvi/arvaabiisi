@@ -1,5 +1,4 @@
-// 0. Nostetaan CodePenin aikarajaa heti alussa (10 sekuntiin)
-window.CP.PenTimer.MAX_TIME_IN_LOOP_WO_EXIT = 10000;
+
 
 window.melodyLibrary = [];
 
