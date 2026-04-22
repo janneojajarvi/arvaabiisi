@@ -239,44 +239,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     noteBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const note = btn.getAttribute('data-note');
-            const currentAcc = (note === 'z') ? "" : selectedAccidental;
-            let noteString = "";
+    btn.addEventListener('click', () => {
+        const note = btn.getAttribute('data-note');
+        const currentAcc = (note === 'z') ? "" : selectedAccidental;
+        let noteString = "";
 
-            // Tarkistetaan kesto
-            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
+        // Määritetään peruskesto
+        let durationStr = selectedDuration === "1" ? "" : selectedDuration;
 
-            if (isDottedMode && note !== 'z') {
-                // Jos piste-nappi on päällä, muutetaan kesto pisteelliseksi (3/2-suhde)
-                if (selectedDuration === "1") durationStr = "3/2";
-                else if (selectedDuration === "2") durationStr = "3";
-                else if (selectedDuration === "/2") durationStr = "3/4";
-                else if (selectedDuration === "/4") durationStr = "3/8";
+        if (isDottedMode && note !== 'z') {
+            // Muunnetaan kestot pisteellisiksi (3/2-suhde)
+            if (selectedDuration === "1") durationStr = "3/2";
+            else if (selectedDuration === "2") durationStr = "3";
+            else if (selectedDuration === "/2") durationStr = "3/4";
+            else if (selectedDuration === "/4") durationStr = "3/8";
+            
+            noteString = currentAcc + note + durationStr + " ";
                 
-                // Luodaan nuotti
-                noteString = currentAcc + note + durationStr + " ";
-                
-                // Nollataan piste-tila heti käytön jälkeen
-                isDottedMode = false;
-                if (dotBtn) dotBtn.classList.remove('active');
-            } else {
-                // Normaali nuotti valitulla kestolla
-                noteString = currentAcc + note + durationStr + " ";
-            }
+                // Palautetaan piste-nappi normaalitilaan
+            isDottedMode = false;
+            if (dotBtn) dotBtn.classList.remove('active');
+        } else {
+            noteString = currentAcc + note + durationStr + " ";
+        }
 
             // Lisätään tekstikenttään
             const start = abcEditor.selectionStart;
-            const end = abcEditor.selectionEnd;
-            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-            }
+        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
 
-            // Nollataan valinnat
-            selectedAccidental = "";
-            accBtns.forEach(b => b.classList.remove('active'));
-            abcEditor.focus();
-            handleSearch();
+        selectedAccidental = "";
+        accBtns.forEach(b => b.classList.remove('active'));
+        abcEditor.focus();
+        handleSearch();
         });
     });
 }); // TÄMÄ sulkee DOMContentLoadedin
