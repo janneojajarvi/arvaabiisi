@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arvaabiisi-v2';
+const CACHE_NAME = 'arvaabiisi-v3';
 
 // Kaikki tiedostot, jotka tallennetaan puhelimen muistiin (välimuistiin)
 const ASSETS = [
