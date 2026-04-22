@@ -10,6 +10,8 @@ const urls = [
 ];
 
 let selectedDuration = "1";
+let selectedDuration = "1";
+let selectedAccidental = ""; // Uusi muuttuja
 
 // --- APUFUNKTIOT ---
 
@@ -156,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+   // 1. Keston valinta
     durBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             durBtns.forEach(b => b.classList.remove('active'));
@@ -164,13 +167,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // 2. Etumerkkien valinta (UUSI)
+    const accBtns = document.querySelectorAll('.acc-btn');
+    accBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                selectedAccidental = "";
+            } else {
+                accBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedAccidental = btn.getAttribute('data-acc');
+            }
+        });
+    });
+
+    // 3. Nuottien syöttö (PÄIVITETTY)
     noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
-            const noteString = note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
+            
+            // Taukoon ei lisätä etumerkkejä
+            const currentAcc = (note === 'z') ? "" : selectedAccidental;
+            const noteString = currentAcc + note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
+            
             const start = abcEditor.selectionStart;
             abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            
+            // Nollataan etumerkki nuotin jälkeen (valinnainen, mutta usein helpompaa)
+            selectedAccidental = "";
+            accBtns.forEach(b => b.classList.remove('active'));
+            
             abcEditor.focus();
             handleSearch();
         });
