@@ -34,7 +34,7 @@ function getFingerprint(abc) {
     if (!abc) return "";
 
     // 1. Esivaihe: Muunnetaan broken rhythm numeromuotoon
-    abc = abc.replace(/([A-Ga-g][,']*)(>)([A-Ga-g][,']*)/g, "$13/2 $3/2");
+    abc = abc.replace(/([A-Ga-g][,']*)([1-9]*)(>)([1-9]*)([A-Ga-g][,']*)/g, "$13/2 $3/2");
     abc = abc.replace(/([A-Ga-g][,']*)(<)([A-Ga-g][,']*)/g, "$1/2 $33/2");
 
     // 2. Sävellajin ja moodin tunnistus
