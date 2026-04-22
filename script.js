@@ -179,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = document.getElementById('clearSearch');
     const durBtns = document.querySelectorAll('.dur-btn');
     const noteBtns = document.querySelectorAll('.note-btn');
+    const accBtns = document.querySelectorAll('.acc-btn');
+    const dotBtn = document.getElementById('dot-btn');
+    const backspaceBtn = document.getElementById('backspace-btn');
 
     if (abcEditor) {
         abcEditor.addEventListener('input', handleSearch);
@@ -192,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-   // 1. Keston valinta
+    // 1. Keston valinta
     durBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             durBtns.forEach(b => b.classList.remove('active'));
@@ -201,8 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 2. Etumerkkien valinta (UUSI)
-    const accBtns = document.querySelectorAll('.acc-btn');
+    // 2. Piste-napin toiminta
+    if (dotBtn) {
+        dotBtn.addEventListener('click', () => {
+            isDotted = !isDotted;
+            dotBtn.classList.toggle('active', isDotted);
+        });
+    }
+
+    // 3. Etumerkkien valinta
     accBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.classList.contains('active')) {
@@ -216,8 +226,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 3. PÄIVITETTY nuottien syöttö (noteBtns.forEach sisällä)
-   noteBtns.forEach(btn => {
+    // 4. Backspace-toiminto
+    if (backspaceBtn) {
+        backspaceBtn.addEventListener('click', () => {
+            const text = abcEditor.value.trimEnd();
+            const lastSpace = text.lastIndexOf(' ');
+            if (lastSpace !== -1) {
+                abcEditor.value = text.substring(0, lastSpace + 1);
+            } else {
+                abcEditor.value = "";
+            }
+            abcEditor.focus();
+            handleSearch();
+        });
+    }
+
+    // 5. Nuottien syöttö nappuloilla
+    noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
             const currentAcc = (note === 'z') ? "" : selectedAccidental;
