@@ -7,10 +7,8 @@
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2196F3">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="kuva.png">
     <link rel="icon" href="kuva.png">
+    <link rel="apple-touch-icon" href="kuva.png">
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -52,7 +50,7 @@
   </header>
 
   <div class="search-section">
-    <textarea id="searchQuery" placeholder="Esim: C C G G A A G2"></textarea>
+    <textarea id="searchQuery" placeholder="Esim: C C G G A A G2 (Ukko Nooa)"></textarea>
     <div id="search-preview"></div>
   </div>
 
@@ -93,8 +91,8 @@
 <script>
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('SW rekisteröity'))
-        .catch(err => console.log('SW virhe', err));
+        .then(reg => console.log('Service Worker rekisteröity'))
+        .catch(err => console.log('SW rekisteröintivirhe', err));
 }
 </script>
 
