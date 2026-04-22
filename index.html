@@ -26,25 +26,41 @@
       <div id="loader-percent" style="margin-top: 6px; font-size: 13px; text-align: center;">0%</div>
     </div>
 
-    <div id="piano-input-container">
-      <div class="input-row duration-row">
-        <button type="button" class="dur-btn active" data-dur="1">Neljäs</button>
-        <button type="button" class="dur-btn" data-dur="2">Puoli</button>
-        <button type="button" class="dur-btn" data-dur="/2">8-osa</button>
-        <button type="button" class="dur-btn" data-dur="/4">16-osa</button>
-      </div>
-      
-      <div class="input-row piano-row">
-        <button type="button" class="note-btn" data-note="C">C</button>
-        <button type="button" class="note-btn" data-note="D">D</button>
-        <button type="button" class="note-btn" data-note="E">E</button>
-        <button type="button" class="note-btn" data-note="F">F</button>
-        <button type="button" class="note-btn" data-note="G">G</button>
-        <button type="button" class="note-btn" data-note="A">A</button>
-        <button type="button" class="note-btn" data-note="B">B</button>
-        <button type="button" class="note-btn space-btn" data-note="z">Tauko</button>
-      </div>
+   <div id="piano-input-container">
+  <div class="input-row tools-row">
+    <div class="button-group">
+      <button type="button" class="dur-btn active" data-dur="1">Neljäs</button>
+      <button type="button" class="dur-btn" data-dur="2">Puoli</button>
+      <button type="button" class="dur-btn" data-dur="/2">8-osa</button>
     </div>
+    <div class="button-group accent-group">
+      <button type="button" class="acc-btn" data-acc="^">♯</button>
+      <button type="button" class="acc-btn" data-acc="_">♭</button>
+      <button type="button" class="acc-btn" data-acc="=">♮</button>
+    </div>
+  </div>
+  
+  <div class="input-row piano-row small-notes">
+    <button type="button" class="note-btn" data-note="c">c</button>
+    <button type="button" class="note-btn" data-note="d">d</button>
+    <button type="button" class="note-btn" data-note="e">e</button>
+    <button type="button" class="note-btn" data-note="f">f</button>
+    <button type="button" class="note-btn" data-note="g">g</button>
+    <button type="button" class="note-btn" data-note="a">a</button>
+    <button type="button" class="note-btn" data-note="b">b</button>
+  </div>
+
+  <div class="input-row piano-row">
+    <button type="button" class="note-btn" data-note="C">C</button>
+    <button type="button" class="note-btn" data-note="D">D</button>
+    <button type="button" class="note-btn" data-note="E">E</button>
+    <button type="button" class="note-btn" data-note="F">F</button>
+    <button type="button" class="note-btn" data-note="G">G</button>
+    <button type="button" class="note-btn" data-note="A">A</button>
+    <button type="button" class="note-btn" data-note="B">B</button>
+    <button type="button" class="note-btn space-btn" data-note="z">Tauko</button>
+  </div>
+</div>
     
     <p>Kirjoita pätkä melodiaa ABC-muodossa tai käytä nappeja. Työkalu etsii vastaavuudet kaikissa sävellajeissa.</p>
   </header>
