@@ -32,13 +32,72 @@ function getPitchValue(acc, note, oct) {
 
 function getFingerprint(abc) {
     if (!abc) return "";
-    let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "").replace(/\{[^}]*\}/g, "").replace(/[|\[\]\s]/g, "");
+
+    // 1. Etsitään sävellaji ja moodi (esim. K:G mix tai K:Am)
+    const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
+    let root = keyMatch ? keyMatch[1] : "C";
+    let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
+
+    // Moodien vaikutus etumerkkien "siirtymään" suhteessa duuriin
+    // Esim. Mixolydian on duuri, josta on poistettu yksi ylennys (tai lisätty alennus)
+    const modeOffsets = {
+        'maj': 0, 'major': 0, 'ion': 0, 'ionian': 0,
+        'mix': -1, 'mixolydian': -1,
+        'lyd': 1, 'lydian': 1,
+        'dor': -2, 'dorian': -2,
+        'min': -3, 'minor': -3, 'aeo': -3, 'aeolian': -3,
+        'phr': -4, 'phrygian': -4,
+        'loc': -5, 'locrian': -5
+    };
+
+    // Perussävelten "kvinttiympyrä"-sijainnit (0 = C, 1 = G, -1 = F...)
+    const circleOfFifths = {
+        'C': 0, 'G': 1, 'D': 2, 'A': 3, 'E': 4, 'B': 5, 'F#': 6, 'C#': 7,
+        'F': -1, 'Bb': -2, 'Eb': -3, 'Ab': -4, 'Db': -5, 'Gb': -6, 'Cb': -7
+    };
+
+    // Lasketaan etumerkkien määrä (sharps positiivinen, flats negatiivinen)
+    let sharpCount = (circleOfFifths[root] || 0) + (modeOffsets[mode] || 0);
+
+    // Muodostetaan säännöt etumerkkimäärän perusteella
+    const sharpsOrder = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+    const flatsOrder = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+    const currentKeyRules = {};
+
+    if (sharpCount > 0) {
+        for (let i = 0; i < sharpCount; i++) currentKeyRules[sharpsOrder[i]] = '^';
+    } else if (sharpCount < 0) {
+        for (let i = 0; i < Math.abs(sharpCount); i++) currentKeyRules[flatsOrder[i]] = '_';
+    }
+
+    // Puhdistetaan ABC-koodi turhasta datasta
+    let clean = abc.replace(/^[A-Z]:.*/gm, "")
+                   .replace(/"[^"]*"/g, "")
+                   .replace(/\{[^}]*\}/g, "")
+                   .replace(/[|\[\]\s]/g, "");
+
     const regex = /([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
     let notes = [];
     let match;
+
     while ((match = regex.exec(clean)) !== null) {
-        let pitch = getPitchValue(match[1], match[2], match[3]);
-        let durStr = match[4];
+        let acc = match[1];      // Tilapäinen etumerkki (^, _, =)
+        const note = match[2];   // Nuotin nimi (C, D, E...)
+        const oct = match[3];    // Oktaavimerkki
+        const durStr = match[4]; // Kesto
+
+        // --- SÄVELLAJIN HUOMIOIMINEN ---
+        // Jos nuotilla ei ole omaa etumerkkiä, katsotaan sävellajin sääntö
+        if (!acc) {
+            acc = currentKeyRules[note.toUpperCase()] || "";
+        } else if (acc === "=") {
+            // Palautusmerkki kumoaa sävellajin etumerkin
+            acc = "";
+        }
+
+        let pitch = getPitchValue(acc, note, oct);
+        
+        // Lasketaan kesto (kuten ennenkin)
         let duration = 1;
         if (durStr) {
             if (durStr.includes('/')) {
@@ -50,6 +109,7 @@ function getFingerprint(abc) {
         }
         notes.push({ pitch, duration });
     }
+
     if (notes.length < 2) return "";
     let fp = [];
     for (let i = 1; i < notes.length; i++) {
