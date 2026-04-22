@@ -244,32 +244,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentAcc = (note === 'z') ? "" : selectedAccidental;
             let noteString = "";
 
-            if (isDottedMode && note !== 'z') {
-                let text = abcEditor.value.trimEnd();
-                let lastSpace = text.lastIndexOf(' ');
-                let lastNotePart = text.substring(lastSpace + 1);
+            // Tarkistetaan kesto
+            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
 
-                // Jos kentässä on jo nuotti, liitetään se broken rhythm -merkinnällä >
-                if (lastNotePart && !lastNotePart.includes('>') && !lastNotePart.includes('<') && lastNotePart !== "") {
-                    abcEditor.value = text + ">" + currentAcc + note + " ";
-                    isDottedMode = false;
-                    if (dotBtn) dotBtn.classList.remove('active');
-                } else {
-                    // Jos ei ole edeltävää nuottia, aloitetaan uusi
-                    noteString = currentAcc + note + " ";
-                }
+            if (isDottedMode && note !== 'z') {
+                // Jos piste-nappi on päällä, muutetaan kesto pisteelliseksi (3/2-suhde)
+                if (selectedDuration === "1") durationStr = "3/2";
+                else if (selectedDuration === "2") durationStr = "3";
+                else if (selectedDuration === "/2") durationStr = "3/4";
+                else if (selectedDuration === "/4") durationStr = "3/8";
+                
+                // Luodaan nuotti
+                noteString = currentAcc + note + durationStr + " ";
+                
+                // Nollataan piste-tila heti käytön jälkeen
+                isDottedMode = false;
+                if (dotBtn) dotBtn.classList.remove('active');
             } else {
-                // Normaali kesto
-                let durationStr = selectedDuration === "1" ? "" : selectedDuration;
+                // Normaali nuotti valitulla kestolla
                 noteString = currentAcc + note + durationStr + " ";
             }
 
-            // Lisätään teksti kursorin kohdalle jos noteString on muodostunut
-            if (noteString) {
-                const start = abcEditor.selectionStart;
-                const end = abcEditor.selectionEnd;
-                abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-                abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            // Lisätään tekstikenttään
+            const start = abcEditor.selectionStart;
+            const end = abcEditor.selectionEnd;
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
+            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
             }
 
             // Nollataan valinnat
