@@ -12,6 +12,41 @@ const urls = [
 let selectedDuration = "1";
 let selectedAccidental = ""; // Uusi muuttuja
 
+// Lisää muuttuja tiedoston alkuun
+let isDotted = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const abcEditor = document.getElementById('searchQuery');
+    const dotBtn = document.getElementById('dot-btn');
+    const backspaceBtn = document.getElementById('backspace-btn');
+
+    // 1. Piste-napin toiminnallisuus
+    if (dotBtn) {
+        dotBtn.addEventListener('click', () => {
+            isDotted = !isDotted;
+            dotBtn.classList.toggle('active', isDotted);
+        });
+    }
+
+    // 2. Backspace-napin toiminnallisuus
+    if (backspaceBtn) {
+        backspaceBtn.addEventListener('click', () => {
+            const text = abcEditor.value.trimEnd();
+            const lastSpace = text.lastIndexOf(' ');
+            
+            if (lastSpace !== -1) {
+                // Poistetaan viimeinen nuotti ja sen perässä oleva välilyönti
+                abcEditor.value = text.substring(0, lastSpace + 1);
+            } else {
+                // Jos on vain yksi nuotti, tyhjennetään kaikki
+                abcEditor.value = "";
+            }
+            
+            abcEditor.focus();
+            handleSearch();
+        });
+    }
+
 // --- APUFUNKTIOT ---
 
 function getPitchValue(acc, note, oct) {
@@ -181,22 +216,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 3. Nuottien syöttö (PÄIVITETTY)
+    // 3. PÄIVITETTY nuottien syöttö (noteBtns.forEach sisällä)
     noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
-            
-            // Taukoon ei lisätä etumerkkejä
             const currentAcc = (note === 'z') ? "" : selectedAccidental;
-            const noteString = currentAcc + note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
             
+            // Lasketaan kesto pisteen kanssa
+            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
+            if (isDotted && note !== 'z') {
+                // ABC-notaatiossa pisteellinen neljäsosa on 3/2 (1.5)
+                // Yksinkertaisuuden vuoksi lisätään vain '>' tai numeromuunnos
+                // Jos kesto on tyhjä (1), pisteellinen on 3/2. Jos /2, se on 3/4.
+                if (selectedDuration === "1") durationStr = "3/2";
+                else if (selectedDuration === "2") durationStr = "3";
+                else if (selectedDuration === "/2") durationStr = "3/4";
+                else if (selectedDuration === "/4") durationStr = "3/8";
+            }
+
+            const noteString = currentAcc + note + durationStr + " ";
+            
+            // Tekstin lisäys... (kuten aiemmin)
             const start = abcEditor.selectionStart;
             abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-            
-            // Nollataan etumerkki nuotin jälkeen (valinnainen, mutta usein helpompaa)
+
+            // Nollataan tilat nuotin jälkeen
+            isDotted = false;
+            if (dotBtn) dotBtn.classList.remove('active');
             selectedAccidental = "";
-            accBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
             
             abcEditor.focus();
             handleSearch();
