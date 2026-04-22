@@ -178,9 +178,15 @@ function handleSearch() {
 
     // 3. Suodatetaan kirjasto
     const matches = window.melodyLibrary.filter(t => {
-        // Varmistetaan, että sormenjälki on olemassa ja sisältää hakusanat
-        return t.fingerprint && t.fingerprint.includes(searchFP);
-    });
+    if (!t.fingerprint) return false;
+    
+    // Poistetaan kesto-suhteet sormenjäljistä vertailun ajaksi
+    // Muuttaa " -3:0.3|5:1 " -> " -3|5 "
+    const cleanLibFP = t.fingerprint.split('|').map(part => part.split(':')[0]).join('|');
+    const cleanSearchFP = searchFP.split('|').map(part => part.split(':')[0]).join('|');
+    
+    return cleanLibFP.includes(cleanSearchFP);
+});
 
     // 4. Päivitetään käyttöliittymä
     const list = document.getElementById('results-list');
