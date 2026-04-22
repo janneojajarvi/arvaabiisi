@@ -33,8 +33,9 @@ function getPitchValue(acc, note, oct) {
 function getFingerprint(abc) {
     if (!abc) return "";
 
-    // 1. Etsitään sävellaji ja moodi (esim. K:G mix tai K:Am)
-    const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
+    // Muutetaan broken rhythm (>) numeromuotoon analyysiä varten
+    // Tämä kattaa nyt myös 16-osat ja muut kestot
+    abc = abc.replace(/([A-Ga-g][,']*)(>)([A-Ga-g][,']*)/g, "$13/2 $3/2");
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
 
@@ -291,10 +292,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 noteString = currentAcc + note;
             }
         } else {
-            // Normaali syöttö ilman pistettä
-            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
-            noteString = currentAcc + note + durationStr + " ";
-        }
+            
+            // Nuottien syöttö nappuloilla (sisällä olevassa logiikassa)
+let durationStr = selectedDuration === "1" ? "" : selectedDuration;
+
+if (isDottedMode && note !== 'z') {
+    // ... olemassa oleva tarkistus edellisestä nuotista ...
+    
+    // Jos halutaan tukea murtolukuja tarkasti ilman > merkkiä:
+    if (selectedDuration === "1") durationStr = "3/2";
+    else if (selectedDuration === "2") durationStr = "3";
+    else if (selectedDuration === "/2") durationStr = "3/4";
+    else if (selectedDuration === "/4") durationStr = "3/8"; // 16-osan pisteellinen versio
+}
 
         // Lisätään teksti ja päivitetään
         const start = abcEditor.selectionStart;
