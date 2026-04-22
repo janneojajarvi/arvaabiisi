@@ -1,35 +1,53 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Melodia-etsivä</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="kuva.png">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
 <div class="app-container">
   <header>
     <h1>🔍 Melodia-etsivä</h1>
+    
     <div id="loader-container" style="margin: 20px 0; display: block;">
-    <div id="loader-text">Ladataan nuottikirjastoa...</div>
-    <div id="loader-bar-wrapper" style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
-        <div id="loader-bar" style="width: 0%; height: 100%; background: #4caf50; transition: width 0.2s;"></div>
+      <div id="loader-text">Ladataan nuottikirjastoa...</div>
+      <div id="loader-bar-wrapper" style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
+          <div id="loader-bar" style="width: 0%; height: 100%; background: #4caf50; transition: width 0.2s;"></div>
+      </div>
+      <div id="loader-percent" style="margin-top: 6px; font-size: 13px; text-align: center;">0%</div>
     </div>
-    <div id="loader-percent" style="margin-top: 6px; font-size: 13px; text-align: center;">0%</div>
-</div>
 
-
-<div id="piano-input-container">
-  <div class="input-row duration-row">
-    <button type="button" class="dur-btn active" data-dur="1">Neljäs</button>
-    <button type="button" class="dur-btn" data-dur="2">Puoli</button>
-    <button type="button" class="dur-btn" data-dur="/2">8-osa</button>
-    <button type="button" class="dur-btn" data-dur="/4">16-osa</button>
-  </div>
-  
-  <div class="input-row piano-row">
-    <button type="button" class="note-btn" data-note="C">C</button>
-    <button type="button" class="note-btn" data-note="D">D</button>
-    <button type="button" class="note-btn" data-note="E">E</button>
-    <button type="button" class="note-btn" data-note="F">F</button>
-    <button type="button" class="note-btn" data-note="G">G</button>
-    <button type="button" class="note-btn" data-note="A">A</button>
-    <button type="button" class="note-btn" data-note="B">B</button>
-    <button type="button" class="note-btn space-btn" data-note="z">Tauko</button>
-  </div>
-</div>
-    <p>Kirjoita pätkä melodiaa ABC-muodossa. Työkalu etsii vastaavuudet kaikissa sävellajeissa.</p>
+    <div id="piano-input-container">
+      <div class="input-row duration-row">
+        <button type="button" class="dur-btn active" data-dur="1">Neljäs</button>
+        <button type="button" class="dur-btn" data-dur="2">Puoli</button>
+        <button type="button" class="dur-btn" data-dur="/2">8-osa</button>
+        <button type="button" class="dur-btn" data-dur="/4">16-osa</button>
+      </div>
+      
+      <div class="input-row piano-row">
+        <button type="button" class="note-btn" data-note="C">C</button>
+        <button type="button" class="note-btn" data-note="D">D</button>
+        <button type="button" class="note-btn" data-note="E">E</button>
+        <button type="button" class="note-btn" data-note="F">F</button>
+        <button type="button" class="note-btn" data-note="G">G</button>
+        <button type="button" class="note-btn" data-note="A">A</button>
+        <button type="button" class="note-btn" data-note="B">B</button>
+        <button type="button" class="note-btn space-btn" data-note="z">Tauko</button>
+      </div>
+    </div>
+    
+    <p>Kirjoita pätkä melodiaa ABC-muodossa tai käytä nappeja. Työkalu etsii vastaavuudet kaikissa sävellajeissa.</p>
   </header>
 
   <div class="search-section">
@@ -58,7 +76,7 @@
     </div>
   </div>
 
-  <div id="loader" class="loader">Ladataan tietokantoja...</div>
+  <div id="loader" class="loader" style="display:none;">Etsitään vastaavuuksia...</div>
 
   <div class="results-section">
     <h2>Löydetyt kappaleet (<span id="match-count">0</span>)</h2>
@@ -71,3 +89,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
