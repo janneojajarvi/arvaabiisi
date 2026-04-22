@@ -10,7 +10,6 @@ const urls = [
 ];
 
 let selectedDuration = "1";
-let selectedDuration = "1";
 let selectedAccidental = ""; // Uusi muuttuja
 
 // --- APUFUNKTIOT ---
