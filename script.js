@@ -10,42 +10,8 @@ const urls = [
 ];
 
 let selectedDuration = "1";
-let selectedAccidental = ""; // Uusi muuttuja
-
-// Lisää muuttuja tiedoston alkuun
+let selectedAccidental = ""; 
 let isDotted = false;
-
-document.addEventListener('DOMContentLoaded', () => {
-    const abcEditor = document.getElementById('searchQuery');
-    const dotBtn = document.getElementById('dot-btn');
-    const backspaceBtn = document.getElementById('backspace-btn');
-
-    // 1. Piste-napin toiminnallisuus
-    if (dotBtn) {
-        dotBtn.addEventListener('click', () => {
-            isDotted = !isDotted;
-            dotBtn.classList.toggle('active', isDotted);
-        });
-    }
-
-    // 2. Backspace-napin toiminnallisuus
-    if (backspaceBtn) {
-        backspaceBtn.addEventListener('click', () => {
-            const text = abcEditor.value.trimEnd();
-            const lastSpace = text.lastIndexOf(' ');
-            
-            if (lastSpace !== -1) {
-                // Poistetaan viimeinen nuotti ja sen perässä oleva välilyönti
-                abcEditor.value = text.substring(0, lastSpace + 1);
-            } else {
-                // Jos on vain yksi nuotti, tyhjennetään kaikki
-                abcEditor.value = "";
-            }
-            
-            abcEditor.focus();
-            handleSearch();
-        });
-    }
 
 // --- APUFUNKTIOT ---
 
@@ -131,6 +97,7 @@ async function initApp() {
 
 function handleSearch() {
     const abcEditor = document.getElementById('searchQuery');
+    if (!abcEditor) return;
     const input = abcEditor.value;
     
     ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { responsive: 'resize', scale: 0.7 });
@@ -170,7 +137,7 @@ function handleSearch() {
     });
 }
 
-// --- TAPAHTUMANKÄSITTELIJÄT ---
+// --- PÄÄTAPAHTUMANKÄSITTELIJÄ ---
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -195,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 1. Keston valinta
     durBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             durBtns.forEach(b => b.classList.remove('active'));
@@ -204,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 2. Piste-napin toiminta
     if (dotBtn) {
         dotBtn.addEventListener('click', () => {
             isDotted = !isDotted;
@@ -212,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Etumerkkien valinta
     accBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.classList.contains('active')) {
@@ -226,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. Backspace-toiminto
     if (backspaceBtn) {
         backspaceBtn.addEventListener('click', () => {
             const text = abcEditor.value.trimEnd();
@@ -241,13 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Nuottien syöttö nappuloilla
     noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
             const currentAcc = (note === 'z') ? "" : selectedAccidental;
             
-            // Lasketaan kesto pisteen kanssa
             let durationStr = selectedDuration === "1" ? "" : selectedDuration;
             if (isDotted && note !== 'z') {
                 if (selectedDuration === "1") durationStr = "3/2";
@@ -263,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
             abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
 
-            // Nollataan tilapäiset valinnat
             isDotted = false;
             if (dotBtn) dotBtn.classList.remove('active');
             selectedAccidental = "";
@@ -273,9 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleSearch();
         });
     });
-}); // TÄMÄ SULKU PUUTTUI (DOMContentLoaded päättyy)
+});
 
-// Service Workerin rekisteröinti (varmista että tämä on näiden sulkujen ulkopuolella)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.error);
 }
