@@ -80,3 +80,31 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
 .space-btn {
     background: #fff3cd;
 }
+
+.button-group {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+}
+
+.acc-btn {
+    flex: 1;
+    padding: 12px 5px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.acc-btn.active {
+    background: #f39c12; /* Oranssi väri erottamaan etumerkit kestosta */
+    color: white;
+    border-color: #d35400;
+}
+
+/* Tehdään ylemmästä oktaavista hieman pienempi tai erivärinen */
+.small-notes .note-btn {
+    background: #f9f9f9;
+    font-size: 0.9em;
+}
