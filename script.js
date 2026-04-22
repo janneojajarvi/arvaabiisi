@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 3. PÄIVITETTY nuottien syöttö (noteBtns.forEach sisällä)
-    noteBtns.forEach(btn => {
+   noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
             const currentAcc = (note === 'z') ? "" : selectedAccidental;
@@ -225,9 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lasketaan kesto pisteen kanssa
             let durationStr = selectedDuration === "1" ? "" : selectedDuration;
             if (isDotted && note !== 'z') {
-                // ABC-notaatiossa pisteellinen neljäsosa on 3/2 (1.5)
-                // Yksinkertaisuuden vuoksi lisätään vain '>' tai numeromuunnos
-                // Jos kesto on tyhjä (1), pisteellinen on 3/2. Jos /2, se on 3/4.
                 if (selectedDuration === "1") durationStr = "3/2";
                 else if (selectedDuration === "2") durationStr = "3";
                 else if (selectedDuration === "/2") durationStr = "3/4";
@@ -235,24 +232,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const noteString = currentAcc + note + durationStr + " ";
-            
-            // Tekstin lisäys... (kuten aiemmin)
             const start = abcEditor.selectionStart;
-            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+            const end = abcEditor.selectionEnd;
+            
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
 
-            // Nollataan tilat nuotin jälkeen
+            // Nollataan tilapäiset valinnat
             isDotted = false;
             if (dotBtn) dotBtn.classList.remove('active');
             selectedAccidental = "";
-            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
+            accBtns.forEach(b => b.classList.remove('active'));
             
             abcEditor.focus();
             handleSearch();
         });
     });
-});
+}); // TÄMÄ SULKU PUUTTUI (DOMContentLoaded päättyy)
 
+// Service Workerin rekisteröinti (varmista että tämä on näiden sulkujen ulkopuolella)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.error);
 }
