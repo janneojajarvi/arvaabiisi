@@ -249,32 +249,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 let lastSpace = text.lastIndexOf(' ');
                 let lastNotePart = text.substring(lastSpace + 1);
 
-                if (lastNotePart && !lastNotePart.includes('>') && !lastNotePart.includes('<')) {
+                // Jos kentässä on jo nuotti, liitetään se broken rhythm -merkinnällä >
+                if (lastNotePart && !lastNotePart.includes('>') && !lastNotePart.includes('<') && lastNotePart !== "") {
                     abcEditor.value = text + ">" + currentAcc + note + " ";
                     isDottedMode = false;
                     if (dotBtn) dotBtn.classList.remove('active');
                 } else {
+                    // Jos ei ole edeltävää nuottia, aloitetaan uusi
                     noteString = currentAcc + note + " ";
                 }
             } else {
+                // Normaali kesto
                 let durationStr = selectedDuration === "1" ? "" : selectedDuration;
                 noteString = currentAcc + note + durationStr + " ";
             }
 
+            // Lisätään teksti kursorin kohdalle jos noteString on muodostunut
             if (noteString) {
                 const start = abcEditor.selectionStart;
-                abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+                const end = abcEditor.selectionEnd;
+                abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
                 abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
             }
 
+            // Nollataan valinnat
             selectedAccidental = "";
             accBtns.forEach(b => b.classList.remove('active'));
             abcEditor.focus();
             handleSearch();
         });
     });
-});
+}); // TÄMÄ sulkee DOMContentLoadedin
 
+// Service Workerin rekisteröinti
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.error);
 }
