@@ -33,11 +33,21 @@ function getPitchValue(acc, note, oct) {
 function getFingerprint(abc) {
     if (!abc) return "";
 
+   // 1. ESIVAIHE: Muunnetaan broken rhythm -merkit (> ja <) numeroiksi.
+    // Tehdään tämä HETI alussa, jotta loppufunktio näkee vain numeroita.
+    
+    // Pitkä-lyhyt (E>G -> E3/2 G/2)
+    abc = abc.replace(/([A-Ga-g][,']*)(>)([A-Ga-g][,']*)/g, "$13/2 $3/2");
+    
+    // Lyhyt-pitkä (E<G -> E/2 G3/2)
+    abc = abc.replace(/([A-Ga-g][,']*)(<)([A-Ga-g][,']*)/g, "$1/2 $33/2");
+
+    // Tämän jälkeen jatkuu sävellajin tunnistus...
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
 
-    abc = abc.replace(/([A-Ga-g][,']*)(>)([A-Ga-g][,']*)/g, "$13/2 $3/2");
+
 
     const modeOffsets = {
         'maj': 0, 'major': 0, 'ion': 0, 'ionian': 0,
