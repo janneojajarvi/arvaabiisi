@@ -5,30 +5,12 @@ window.melodyLibrary = [];
 
 // 1. Määritellään URL-osoitteet vain KERRAN koodin alussa
 const urls = [
-    "https://gist.githubusercontent.com/janneojajarvi/af644185586173aa730845768853cae7/raw/6eedf654c2a566f114d1500966fbff742dca6f9a/sessionSet01.js",
-    "https://gist.githubusercontent.com/janneojajarvi/4c1d2db5969d829904ba9c0fdaa54c58/raw/0e91777c9aeb15867932ad76cf6d010beeb1192a/sessionSet02.js",
-    "https://gist.githubusercontent.com/janneojajarvi/cfe73575c263c347ac4d965068cb9eb3/raw/c09b858904d5237813817364b6d2c0942569cba5/sessionSet03.js",
-    "https://gist.githubusercontent.com/janneojajarvi/46f13049d9cbae926802be8a95b7eb5e/raw/13215b1c32744eb1369f523bb1397569c79e7414/sessionSet04.js",
-    "https://gist.githubusercontent.com/janneojajarvi/4c7b52b826f21b46dff8676827c3e10b/raw/c5f59ec9f04217ac4eb61a654b3fa07e5d3d0b9b/sessionSet05.js",
-    "https://gist.githubusercontent.com/janneojajarvi/89558ec48805f4f732c820463fb4c19f/raw/85dcc170db09390e5139b0a0d37cb0510998d5f5/sessionSet06.js",
-    "https://gist.githubusercontent.com/janneojajarvi/31bc330b464b2b6b15b923e3e497764d/raw/29e6de3abf1bf2735197f52762647e4fa15e8d2c/sessionSet07.js",
-    "https://gist.githubusercontent.com/janneojajarvi/2370235f953421f816db9b8a2803ec52/raw/ef5698bb882ffaaf6ee9d323f99f5ad82828c43f/sessionSet08.js",
-    "https://gist.githubusercontent.com/janneojajarvi/78b5496c73337484dcb9ae6e383806a2/raw/ede541b9ad054f2e426e4b2af531523f715de380/sessionSet09.js",
-    "https://gist.githubusercontent.com/janneojajarvi/a71451137634b51cae660eaeed3430ad/raw/70ffa030c06a5e221d854b2139cf3d8eb3c6c9e2/sessionSet10.js",
-    "https://gist.githubusercontent.com/janneojajarvi/a25ff25c5f5189ec2060e12f58b70bc7/raw/d129881b960db55ffb30352ddfec30f9b13fef6b/sessionSet11.js",
-    "https://gist.githubusercontent.com/janneojajarvi/ad79fec4b5bd5eeba9786fe6e1e0dc5e/raw/9c14e78846afa05c240240d1b4a1edf336e93364/sessionSet12.js",
-    "https://gist.githubusercontent.com/janneojajarvi/76274bcff2e3a632998256d6cdbd347e/raw/86c72e0c113a122b95a5b23af4500b79a0ebc9fa/sessionSet13.js",
-    "https://gist.githubusercontent.com/janneojajarvi/d1567bf9bc935dac0aeceac182554fcf/raw/292027103381d8dee9539550307639e1c9781f47/sessionSet14.js",
-    "https://gist.githubusercontent.com/janneojajarvi/360e2cf4691030329245d4dc25123550/raw/4f17ea6dd3db27dcc0f130fb95be47b419118b87/sessionSet15.js",
-    "https://gist.githubusercontent.com/janneojajarvi/3839c39d9e4be3f39adaecc0ea3d5318/raw/29d65213ff131913af4c59d5d36cd6ff2389278c/sessionSet16.js",
-    "https://gist.githubusercontent.com/janneojajarvi/74e11c0af59247cf5c974996dafd9e3e/raw/28ce132f8d4809705f751c34ad676c177f1aa081/sessionSet17.js",
-    "https://gist.githubusercontent.com/janneojajarvi/426a5f6bc7e1a4657132a5c124cd4344/raw/a11534d29ceb297d1c3b99dd895b8d440fd1019b/sessionSet18.js",
-    "https://gist.githubusercontent.com/janneojajarvi/daa48d8a5429539148525aecec2e6039/raw/40ac06dc024cc2b344b911e046bfa2046c60b669/folkwikiSet1.js",
-    "https://gist.githubusercontent.com/janneojajarvi/b48805f16099426ecf2ebd16eaed78e8/raw/c2a3cc03be8134fc6ffc143b6f48cde90a4808bf/folkwikiSet2.js",
-    "https://gist.githubusercontent.com/janneojajarvi/1af08b867b7d5aba6d233e4ce509a32a/raw/74d8e08d28947afc46dd89363a2249ced549a298/folkwikiSet3.js",
-    "https://gist.githubusercontent.com/janneojajarvi/71cdf9dff96ed8dfc58d8e4fc751f2c6/raw/99c8b1579eb60985d4d21fc8723a115eaee4d629/fsfolkdiktning02.js",
-    "https://gist.githubusercontent.com/janneojajarvi/c4d86dfb78294278394e0f744a06d079/raw/350d615df7ed4de642c77b8c7c421351b0a51bcd/fsfolkdiktning01.js",
-    "https://gist.githubusercontent.com/janneojajarvi/92e2cb8563d91579c164961351b9c255/raw/45c8d6cf2bc7eef4ecdc404e62c1a2dbff43ae6c/extrasetti5.js"
+    "sessionSet01.js", "sessionSet02.js", "sessionSet03.js", "sessionSet04.js",
+    "sessionSet05.js", "sessionSet06.js", "sessionSet07.js", "sessionSet08.js",
+    "sessionSet09.js", "sessionSet10.js", "sessionSet11.js", "sessionSet12.js",
+    "sessionSet13.js", "sessionSet14.js", "sessionSet15.js", "sessionSet16.js",
+    "sessionSet17.js", "sessionSet18.js", "folkwikiSet1.js", "folkwikiSet2.js",
+    "folkwikiSet3.js", "fsfolkdiktning02.js", "fsfolkdiktning01.js", "extrasetti5.js"
 ];
 
 // 2. Apufunktiot sävelkorkeudelle ja sormenjäljelle
