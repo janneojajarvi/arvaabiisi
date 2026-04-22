@@ -231,11 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (dotBtn) {
-        dotBtn.addEventListener('click', () => {
-            isDotted = !isDotted;
-            dotBtn.classList.toggle('active', isDotted);
-        });
-    }
+    dotBtn.addEventListener('click', () => {
+        isDottedMode = !isDottedMode;
+        dotBtn.classList.toggle('active', isDottedMode);
+    });
+}
 
     accBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -265,32 +265,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     noteBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const note = btn.getAttribute('data-note');
-            const currentAcc = (note === 'z') ? "" : selectedAccidental;
-            
-            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
-            if (isDotted && note !== 'z') {
-                if (selectedDuration === "1") durationStr = "3/2";
-                else if (selectedDuration === "2") durationStr = "3";
-                else if (selectedDuration === "/2") durationStr = "3/4";
-                else if (selectedDuration === "/4") durationStr = "3/8";
+    btn.addEventListener('click', () => {
+        const note = btn.getAttribute('data-note');
+        const currentAcc = (note === 'z') ? "" : selectedAccidental;
+        const abcEditor = document.getElementById('searchQuery');
+        
+        let noteString = "";
+
+        if (isDottedMode && note !== 'z') {
+            // Tarkistetaan, onko tekstikentän lopussa jo nuotti, jota seurata
+            let text = abcEditor.value.trimEnd();
+            let lastSpace = text.lastIndexOf(' ');
+            let lastNotePart = text.substring(lastSpace + 1);
+
+            if (lastNotePart && !lastNotePart.includes('>') && !lastNotePart.includes('<')) {
+                // Poistetaan välilyönti edellisen nuotin perästä ja lisätään > sekä uusi nuotti
+                abcEditor.value = text + ">" + currentAcc + note;
+                noteString = " "; // Lisätään vain välilyönti perään
+                
+                // Nollataan tila, kun pari on valmis
+                isDottedMode = false;
+                if (dotBtn) dotBtn.classList.remove('active');
+            } else {
+                // Jos edeltävää nuottia ei ole, aloitetaan nuotti normaalisti
+                noteString = currentAcc + note;
             }
+        } else {
+            // Normaali syöttö ilman pistettä
+            let durationStr = selectedDuration === "1" ? "" : selectedDuration;
+            noteString = currentAcc + note + durationStr + " ";
+        }
 
-            const noteString = currentAcc + note + durationStr + " ";
-            const start = abcEditor.selectionStart;
-            const end = abcEditor.selectionEnd;
-            
-            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+        // Lisätään teksti ja päivitetään
+        const start = abcEditor.selectionStart;
+        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+        abcEditor.selectionStart = abcEditor.selectionEnd = abcEditor.value.length;
 
-            isDotted = false;
-            if (dotBtn) dotBtn.classList.remove('active');
-            selectedAccidental = "";
-            accBtns.forEach(b => b.classList.remove('active'));
-            
-            abcEditor.focus();
-            handleSearch();
+        // Nollataan etumerkki
+        selectedAccidental = "";
+        accBtns.forEach(b => b.classList.remove('active'));
+        
+        abcEditor.focus();
+        handleSearch();
         });
     });
 });
