@@ -108,3 +108,23 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     background: #f9f9f9;
     font-size: 0.9em;
 }
+
+.tool-btn {
+    flex: 0.5;
+    padding: 12px 5px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#dot-btn.active {
+    background: #4caf50;
+    color: white;
+}
+
+#backspace-btn:active {
+    background: #f06292 !important;
+    color: white;
+}
