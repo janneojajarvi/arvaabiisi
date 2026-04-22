@@ -279,6 +279,14 @@ noteBtns.forEach(btn => {
     });
 });
 
+
+
+// Rekisteröidään Service Worker heti
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker rekisteröity!', reg))
+        .catch(err => console.log('Service Worker virhe:', err));
+}
 // 5. Käynnistys kun sivu on ladattu
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
