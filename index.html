@@ -6,17 +6,45 @@
     <title>Melodia-etsivä</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="kuva.png">
 </head>
 <body>
 
 <div class="app-container">
+  <header>
+    <h1>🔍 Melodia-etsivä</h1>
+    <div id="loader-container" style="margin: 20px 0; display: block;">
+        <div id="loader-text">Ladataan nuottikirjastoa...</div>
+        <div id="loader-bar-wrapper" style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
+            <div id="loader-bar" style="width: 0%; height: 100%; background: #4caf50; transition: width 0.2s;"></div>
+        </div>
+        <div id="loader-percent" style="margin-top: 6px; font-size: 13px; text-align: center;">0%</div>
     </div>
+
+    <div id="piano-input-container">
+        </div>
+    <p>Kirjoita pätkä melodiaa ABC-muodossa tai käytä nappeja.</p>
+  </header>
+
+  <div class="search-section">
+    <textarea id="searchQuery" placeholder="Esim: C C G G A A G2"></textarea>
+    <div id="search-preview"></div>
+  </div>
+
+  <div class="results-section">
+    <h2>Löydetyt kappaleet (<span id="match-count">0</span>)</h2>
+    <div id="results-list"></div>
+  </div>
+  
+  <div id="full-note-display">
+    <div id="paper"></div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
 <script src="script.js"></script>
 
 <script>
-// Rekisteröidään Service Worker, jotta PWA toimii
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
         .then(reg => console.log('SW rekisteröity'))
