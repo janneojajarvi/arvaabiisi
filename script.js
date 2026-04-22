@@ -1,6 +1,5 @@
 window.melodyLibrary = [];
 
-// 1. Määritellään URL-osoitteet paikallisina tiedostoina
 const urls = [
     "sessionSet01.js", "sessionSet02.js", "sessionSet03.js", "sessionSet04.js",
     "sessionSet05.js", "sessionSet06.js", "sessionSet07.js", "sessionSet08.js",
@@ -10,9 +9,12 @@ const urls = [
     "folkwikiSet3.js", "fsfolkdiktning01.js", "fsfolkdiktning02.js", "extrasetti5.js"
 ];
 
-// 2. Apufunktiot sävelkorkeudelle ja sormenjäljelle
+let selectedDuration = "1";
+
+// --- APUFUNKTIOT ---
+
 function getPitchValue(acc, note, oct) {
-    const basePitches = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11, 'H': 11 };
+    const basePitches = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11 };
     let p = basePitches[note.toUpperCase()];
     if (note === note.toLowerCase()) p += 12;
     if (oct) {
@@ -56,28 +58,22 @@ function getFingerprint(abc) {
     return "|" + fp.join("|") + "|";
 }
 
+// --- SOVELLUKSEN LOGIIKKA ---
 
-// 3. Sovelluksen alustus (sisältää viiveen CodePeniä varten)
 async function initApp() {
-    const loaderContainer = document.getElementById("loader-container");
     const loaderBar = document.getElementById("loader-bar");
     const loaderPercent = document.getElementById("loader-percent");
-    
-    console.log("Aloitetaan lataus: " + urls.length + " tietokantaa...");
+    const loaderContainer = document.getElementById("loader-container");
 
     for (let i = 0; i < urls.length; i++) {
         try {
             const response = await fetch(urls[i]);
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            
             const text = await response.text();
             const startIdx = text.indexOf('[');
             const endIdx = text.lastIndexOf(']');
             
             if (startIdx !== -1 && endIdx !== -1) {
-                const rawList = text.substring(startIdx, endIdx + 1);
-                const data = new Function('return ' + rawList)(); 
-                
+                const data = new Function('return ' + text.substring(startIdx, endIdx + 1))();
                 if (Array.isArray(data)) {
                     data.forEach(tune => {
                         if (tune.abc) {
@@ -87,83 +83,49 @@ async function initApp() {
                     });
                 }
             }
-
-            // --- LATAUSPALKIN PÄIVITYS ---
             const progress = Math.round(((i + 1) / urls.length) * 100);
             if (loaderBar) loaderBar.style.width = progress + "%";
             if (loaderPercent) loaderPercent.textContent = progress + "%";
-
-            // Pieni viive CodePeniä varten ja jotta ehdit nähdä palkin liikkuvan
-            await new Promise(resolve => setTimeout(resolve, 30));
-
         } catch (e) {
-            console.error("Virhe: " + urls[i], e);
+            console.error("Latausvirhe: " + urls[i], e);
         }
     }
-
-    console.log("Valmis! Kirjastossa on " + window.melodyLibrary.length + " kappaletta.");
-    
-    // Piilotetaan latauspalkki kun valmista
-    if (loaderContainer) {
-        setTimeout(() => {
-            loaderContainer.style.display = 'none';
-        }, 500); // Puolen sekunnin viive, jotta 100% ehtii näkyä
-    }
+    if (loaderContainer) loaderContainer.style.display = 'none';
 }
 
-// 4. Hakutoiminto
-function handleSearch(e) {
-    const input = e.target.value;
+function handleSearch() {
+    const abcEditor = document.getElementById('searchQuery');
+    const input = abcEditor.value;
+    
     ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { responsive: 'resize', scale: 0.7 });
 
-    const searchInputClean = input.replace(/\s/g, "");
-    if (searchInputClean.length < 3) {
+    if (input.replace(/\s/g, "").length < 3) {
         document.getElementById('results-list').innerHTML = "";
         document.getElementById('match-count').innerText = "0";
         return;
     }
 
-    // Puhdistetaan hakusormenjälki (poistetaan reunaviivat vertailua varten)
     let searchFP = getFingerprint(input).replace(/^\|/, "").replace(/\|$/, "");
     if (!searchFP) return;
 
     const matches = window.melodyLibrary.filter(t => t.fingerprint && t.fingerprint.includes(searchFP));
-    
     const list = document.getElementById('results-list');
     document.getElementById('match-count').innerText = matches.length;
     list.innerHTML = "";
 
     matches.slice(0, 30).forEach(tune => {
-        // 1. Etsitään sävellaji (kuten aiemmin)
-        let displayKey = tune.key;
-        if (!displayKey && tune.abc) {
-            const keyMatch = tune.abc.match(/^K:\s*([A-Ga-g][#b]?\s*[A-Za-z]*)/m);
-            displayKey = keyMatch ? keyMatch[1] : "??";
-        }
-
-        // 2. Lasketaan alkamistahti
-        // Lasketaan alkamistahti
-const fpIndex = tune.fingerprint.indexOf(searchFP);
-const stringBeforeMatch = tune.fingerprint.substring(0, fpIndex);
-        
-        // Lasketaan kuinka monta pystyviivaa eli tahtia on ennen osumaa. 
-     // Vähennetään 1, jotta alusta alkava melodia on tahdissa 1
-const startMeasure = stringBeforeMatch.split('|').length - 1;
-
-// Varmistetaan vielä, ettei luku mene alle yhden (esim. virhetilanteissa)
-const finalMeasure = Math.max(1, startMeasure);
+        let displayKey = tune.key || (tune.abc.match(/^K:\s*([A-Ga-g][#b]?\s*[A-Za-z]*)/m) || ["", "??"])[1];
+        const fpIndex = tune.fingerprint.indexOf(searchFP);
+        const startMeasure = tune.fingerprint.substring(0, fpIndex).split('|').length;
 
         const div = document.createElement('div');
         div.className = 'tune-card';
-        // Lisätään alkamistahti näkyviin sävellajin viereen
         div.innerHTML = `
             <h3>${tune.name}</h3>
             <div style="font-size: 0.9em; color: #666;">
-                <span>K: ${displayKey}</span> | 
-                <span>Alkamistahti: ${startMeasure}</span>
+                <span>K: ${displayKey}</span> | <span>Alkamistahti: ${startMeasure}</span>
             </div>
         `;
-        
         div.onclick = () => {
             ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -172,70 +134,28 @@ const finalMeasure = Math.max(1, startMeasure);
     });
 }
 
-window.currentDur = "1"; // Oletuskesto
-
-function setupClickHandlers(visualObj) {
-    const svg = document.querySelector("#paper svg");
-    if (!svg) return;
-
-    svg.addEventListener('click', function(e) {
-        // Lasketaan klikkauskohta suhteessa viivastoon
-        const pt = svg.createSVGPoint();
-        pt.x = e.clientX;
-        pt.y = e.clientY;
-        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
-
-        // Tämä on yksinkertaistettu logiikka sävelen laskemiseen (Y-koordinaatti)
-        // ABCJS:n koordinaatistossa välit ovat n. 6-10 yksikköä
-        // Tässä tarvitaan kalibrointi viivaston nollakohtaan
-        const pitch = calculatePitchFromY(svgP.y);
-        
-        if (pitch) {
-            appendNoteToAbc(pitch, window.currentDur);
-        }
-    });
-}
-
-function appendNoteToAbc(pitch, duration) {
-    const editor = document.getElementById('abc-editor'); // Tai missä tekstisi on
-    const newNote = pitch + duration + " ";
-    editor.value += newNote;
-    
-    // Päivitetään nuottikuva heti
-    processAbc(); 
-}
-
-// Globaalit muuttujat syöttöä varten
-let selectedDuration = "1";
-
-// --- SOVELLUKSEN TAPAHTUMANKÄSITTELIJÄT ---
+// --- TAPAHTUMANKÄSITTELIJÄT ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+
     const abcEditor = document.getElementById('searchQuery');
     const clearBtn = document.getElementById('clearSearch');
     const durBtns = document.querySelectorAll('.dur-btn');
     const noteBtns = document.querySelectorAll('.note-btn');
 
-    // 1. Alustetaan haku ja lataus
-    initApp();
-
     if (abcEditor) {
         abcEditor.addEventListener('input', handleSearch);
     }
 
-    // 2. Tyhjennä-painikkeen toiminnallisuus
-    if (clearBtn && abcEditor) {
+    if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            abcEditor.value = ""; // Tyhjennetään teksti
-            abcEditor.focus();    // Palautetaan kursori kenttään
-            
-            // Päivitetään nuottikuva ja hakutulokset tyhjiksi
-            const event = new Event('input', { bubbles: true });
-            abcEditor.dispatchEvent(event);
+            abcEditor.value = "";
+            abcEditor.focus();
+            handleSearch();
         });
     }
 
-    // 3. Keston valinnan hallinta (Neljäs, Puoli, jne.)
     durBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             durBtns.forEach(b => b.classList.remove('active'));
@@ -244,39 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. Nuottien syöttö pianonapeista (C, D, E, jne.)
     noteBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
-            
-            if (!abcEditor) return;
-
-            // Rakennetaan nuottimerkkijono valitulla kestolla
             const noteString = note + (selectedDuration === "1" ? "" : selectedDuration) + " ";
-            
-            // Lisätään teksti kursorin kohdalle (ei pyyhi olemassa olevaa tekstiä)
             const start = abcEditor.selectionStart;
-            const end = abcEditor.selectionEnd;
-            const text = abcEditor.value;
-            
-            abcEditor.value = text.slice(0, start) + noteString + text.slice(end);
-            
-            // Siirretään kursori uuden nuotin perään
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
             abcEditor.focus();
-
-            // Laukaistaan haku ja esikatselun päivitys
-            const event = new Event('input', { bubbles: true });
-            abcEditor.dispatchEvent(event);
+            handleSearch();
         });
     });
 });
 
-// --- SERVICE WORKER REKISTERÖINTI ---
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker rekisteröity onnistuneesti!', reg.scope))
-            .catch(err => console.log('Service Worker rekisteröintivirhe:', err));
-    });
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
 }
