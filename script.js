@@ -11,7 +11,7 @@ const urls = [
 
 let selectedDuration = "1";
 let selectedAccidental = ""; 
-let isDottedMode = false; // Varmista että nimi täsmää kaikkialla
+let isDottedMode = false;
 
 // --- APUFUNKTIOT ---
 
@@ -33,11 +33,11 @@ function getPitchValue(acc, note, oct) {
 function getFingerprint(abc) {
     if (!abc) return "";
 
-    // 1. Esivaihe: Broken rhythm -muunnokset
+    // 1. Esivaihe: Muunnetaan broken rhythm numeromuotoon
     abc = abc.replace(/([A-Ga-g][,']*)(>)([A-Ga-g][,']*)/g, "$13/2 $3/2");
     abc = abc.replace(/([A-Ga-g][,']*)(<)([A-Ga-g][,']*)/g, "$1/2 $33/2");
 
-    // 2. Sävellajin tunnistus
+    // 2. Sävellajin ja moodin tunnistus
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
@@ -56,56 +56,42 @@ function getFingerprint(abc) {
     let sharpCount = (circleOfFifths[root] || 0) + (modeOffsets[mode] || 0);
     const sharpsOrder = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
     const flatsOrder = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
-    
-    // Sävellajin oletusmerkit
     const keyRules = {};
+
     if (sharpCount > 0) {
         for (let i = 0; i < sharpCount; i++) keyRules[sharpsOrder[i]] = '^';
     } else if (sharpCount < 0) {
         for (let i = 0; i < Math.abs(sharpCount); i++) keyRules[flatsOrder[i]] = '_';
     }
 
-    // 3. Nuottien analyysi huomioiden tahdin sisäiset muutokset
+    // 3. Nuottien analyysi (huomioiden tahdin sisäiset muutokset)
     let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "").replace(/\{[^}]*\}/g, "");
-    
-    // Regex, joka tunnistaa nuotit JA tahtiviivat
     const regex = /([|])|([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
     
     let notes = [];
-    let currentBarAccidentals = {}; // Tänne tallennetaan tahdin sisäiset muutokset
+    let barAccidentals = {}; 
     let match;
 
     while ((match = regex.exec(clean)) !== null) {
         if (match[1] === '|') {
-            // Tahtiviiva kohdattu: nollataan tahdin sisäiset etumerkit
-            currentBarAccidentals = {};
+            barAccidentals = {}; // Nollaa etumerkit tahdin vaihtuessa
             continue;
         }
 
-        let acc = match[2];      // Tilapäinen merkki (^, _, =)
-        const note = match[3];   // Nuotti (A, B, C...)
-        const oct = match[4];    // Oktaavi
-        const durStr = match[5]; // Kesto
-        
+        let acc = match[2];
+        const note = match[3];
+        const oct = match[4];
+        const durStr = match[5];
         const noteName = note.toUpperCase();
 
-        // Määritetään nuotin todellinen etumerkki
         if (acc) {
-            // Jos nuotissa on oma etumerkki, se jää voimaan tahdin loppuun
-            if (acc === "=") acc = ""; // Palautusmerkki tallentuu tyhjänä (perusnuotti)
-            currentBarAccidentals[noteName] = acc;
+            if (acc === "=") acc = "";
+            barAccidentals[noteName] = acc;
         } else {
-            // Jos ei merkkiä, katsotaan onko tässä tahdissa jo muutettu tätä säveltä
-            if (currentBarAccidentals.hasOwnProperty(noteName)) {
-                acc = currentBarAccidentals[noteName];
-            } else {
-                // Jos ei, käytetään sävellajin sääntöä
-                acc = keyRules[noteName] || "";
-            }
+            acc = barAccidentals.hasOwnProperty(noteName) ? barAccidentals[noteName] : (keyRules[noteName] || "");
         }
 
         let pitch = getPitchValue(acc, note, oct);
-        
         let duration = 1;
         if (durStr) {
             if (durStr.includes('/')) {
@@ -122,13 +108,14 @@ function getFingerprint(abc) {
     let fp = [];
     for (let i = 1; i < notes.length; i++) {
         let interval = notes[i].pitch - notes[i-1].pitch;
+        // Normalisoidaan kesto-suhde kokonaisluvuksi haun helpottamiseksi
         let durRatio = Math.round(notes[i].duration / notes[i-1].duration);
         fp.push(`${interval}:${durRatio}`);
     }
     return "|" + fp.join("|") + "|";
 }
 
-// --- SOVELLUKSEN LOGIIKKA ---
+// --- LATAUS JA HAKU ---
 
 async function initApp() {
     const loaderBar = document.getElementById("loader-bar");
@@ -156,16 +143,13 @@ async function initApp() {
             const progress = Math.round(((i + 1) / urls.length) * 100);
             if (loaderBar) loaderBar.style.width = progress + "%";
             if (loaderPercent) loaderPercent.textContent = progress + "%";
-        } catch (e) {
-            console.error("Latausvirhe: " + urls[i], e);
-        }
+        } catch (e) { console.error(e); }
     }
     if (loaderContainer) loaderContainer.style.display = 'none';
 }
 
 function handleSearch() {
     const abcEditor = document.getElementById('searchQuery');
-    if (!abcEditor) return;
     const input = abcEditor.value;
     
     ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { responsive: 'resize', scale: 0.7 });
@@ -176,7 +160,8 @@ function handleSearch() {
         return;
     }
 
-    let searchFP = getFingerprint(input).replace(/^\|/, "").replace(/\|$/, "");
+    // Luodaan hakusormenjälki ja poistetaan reunaputket vertailua varten
+    let searchFP = getFingerprint(input).slice(1, -1);
     if (!searchFP) return;
 
     const matches = window.melodyLibrary.filter(t => t.fingerprint && t.fingerprint.includes(searchFP));
@@ -185,121 +170,68 @@ function handleSearch() {
     list.innerHTML = "";
 
     matches.slice(0, 30).forEach(tune => {
-        let displayKey = tune.key || (tune.abc.match(/^K:\s*([A-Ga-g][#b]?\s*[A-Za-z]*)/m) || ["", "??"])[1];
-        const fpIndex = tune.fingerprint.indexOf(searchFP);
-        const startMeasure = tune.fingerprint.substring(0, fpIndex).split('|').length;
-
         const div = document.createElement('div');
         div.className = 'tune-card';
-        div.innerHTML = `<h3>${tune.name}</h3><div style="font-size: 0.9em; color: #666;"><span>K: ${displayKey}</span> | <span>Alkamistahti: ${startMeasure}</span></div>`;
-        div.onclick = () => {
-            ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        };
+        div.innerHTML = `<h3>${tune.name}</h3>`;
+        div.onclick = () => ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
         list.appendChild(div);
     });
 }
 
-// --- PÄÄTAPAHTUMANKÄSITTELIJÄ ---
+// --- TAPAHTUMAT ---
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
-
     const abcEditor = document.getElementById('searchQuery');
-    const clearBtn = document.getElementById('clearSearch');
-    const durBtns = document.querySelectorAll('.dur-btn');
-    const noteBtns = document.querySelectorAll('.note-btn');
-    const accBtns = document.querySelectorAll('.acc-btn');
-    const dotBtn = document.getElementById('dot-btn');
-    const backspaceBtn = document.getElementById('backspace-btn');
 
-    if (abcEditor) abcEditor.addEventListener('input', handleSearch);
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            abcEditor.value = "";
-            abcEditor.focus();
-            handleSearch();
-        });
-    }
-
-    durBtns.forEach(btn => {
+    document.querySelectorAll('.dur-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            durBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedDuration = btn.getAttribute('data-dur');
         });
     });
 
-    if (dotBtn) {
-        dotBtn.addEventListener('click', () => {
-            isDottedMode = !isDottedMode;
-            dotBtn.classList.toggle('active', isDottedMode);
-        });
-    }
+    document.getElementById('dot-btn').addEventListener('click', (e) => {
+        isDottedMode = !isDottedMode;
+        e.target.classList.toggle('active', isDottedMode);
+    });
 
-    accBtns.forEach(btn => {
+    document.querySelectorAll('.acc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            if (btn.classList.contains('active')) {
-                btn.classList.remove('active');
-                selectedAccidental = "";
-            } else {
-                accBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedAccidental = btn.getAttribute('data-acc');
-            }
+            selectedAccidental = btn.classList.contains('active') ? "" : btn.getAttribute('data-acc');
+            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
+            if (selectedAccidental) btn.classList.add('active');
         });
     });
 
-    if (backspaceBtn) {
-        backspaceBtn.addEventListener('click', () => {
-            let text = abcEditor.value.trimEnd();
-            const lastSpace = text.lastIndexOf(' ');
-            abcEditor.value = lastSpace !== -1 ? text.substring(0, lastSpace + 1) : "";
+    document.querySelectorAll('.note-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const note = btn.getAttribute('data-note');
+            let dur = selectedDuration === "1" ? "" : selectedDuration;
+            
+            if (isDottedMode && note !== 'z') {
+                if (selectedDuration === "1") dur = "3/2";
+                else if (selectedDuration === "/2") dur = "3/4";
+                isDottedMode = false;
+                document.getElementById('dot-btn').classList.remove('active');
+            }
+
+            const noteString = selectedAccidental + note + dur + " ";
+            const start = abcEditor.selectionStart;
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            
+            selectedAccidental = "";
+            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
             abcEditor.focus();
             handleSearch();
         });
-    }
-
-    noteBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const note = btn.getAttribute('data-note');
-        const currentAcc = (note === 'z') ? "" : selectedAccidental;
-        let noteString = "";
-
-        // Määritetään peruskesto
-        let durationStr = selectedDuration === "1" ? "" : selectedDuration;
-
-        if (isDottedMode && note !== 'z') {
-            // Muunnetaan kestot pisteellisiksi (3/2-suhde)
-            if (selectedDuration === "1") durationStr = "3/2";
-            else if (selectedDuration === "2") durationStr = "3";
-            else if (selectedDuration === "/2") durationStr = "3/4";
-            else if (selectedDuration === "/4") durationStr = "3/8";
-            
-            noteString = currentAcc + note + durationStr + " ";
-                
-                // Palautetaan piste-nappi normaalitilaan
-            isDottedMode = false;
-            if (dotBtn) dotBtn.classList.remove('active');
-        } else {
-            noteString = currentAcc + note + durationStr + " ";
-        }
-
-            // Lisätään tekstikenttään
-            const start = abcEditor.selectionStart;
-        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
-        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-
-        selectedAccidental = "";
-        accBtns.forEach(b => b.classList.remove('active'));
-        abcEditor.focus();
-        handleSearch();
-        });
     });
-}); // TÄMÄ sulkee DOMContentLoadedin
 
-// Service Workerin rekisteröinti
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(console.error);
-}
+    abcEditor.addEventListener('input', handleSearch);
+    document.getElementById('clearSearch').addEventListener('click', () => {
+        abcEditor.value = "";
+        handleSearch();
+    });
+});
