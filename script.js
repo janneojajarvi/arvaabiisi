@@ -188,7 +188,7 @@ function handleSearch() {
             const div = document.createElement('div');
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
-            div.onclick = () => {
+           div.onclick = () => {
     currentAbc = tune.abc;
     const visualObj = ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' })[0];
     
@@ -218,6 +218,8 @@ function handleSearch() {
     
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 };
+            list.appendChild(div);
+        });
 
         // Palautetaan nappi ennalleen
         searchBtn.innerText = "Hae kappaleita";
