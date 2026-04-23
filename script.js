@@ -203,7 +203,7 @@ function handleSearch() {
     audioContainer.style.display = 'block';
 
     // 2. Piirretään nuotit (Q:100 tempo)
-    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
+    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:80\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
     if (ABCJS.synth.supportsAudio()) {
