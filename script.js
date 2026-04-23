@@ -190,7 +190,12 @@ function handleSearch() {
             div.innerHTML = `<h3>${tune.name}</h3>`;
            div.onclick = async () => {
     currentAbc = tune.abc;
-    
+
+// 1. Pysäytetään nykyinen soitto heti, jos sellainen on
+    if (synthControl) {
+        synthControl.pause();
+    }
+               
     // 1. Piirretään nuotit (lisätään Q:100, jotta tempo on oikea)
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
