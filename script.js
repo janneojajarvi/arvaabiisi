@@ -32,11 +32,7 @@ function getPitchValue(acc, note, oct) {
 
 function getFingerprint(abc) {
     if (!abc) return "";
-
-    // 1. Esivaihe: Muunnetaan broken rhythm numeromuotoon
     abc = abc.replace(/[><]/g, " ");
-
-    // 2. Sävellajin ja moodin tunnistus
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
@@ -63,7 +59,6 @@ function getFingerprint(abc) {
         for (let i = 0; i < Math.abs(sharpCount); i++) keyRules[flatsOrder[i]] = '_';
     }
 
-    // 3. Nuottien analyysi (huomioiden tahdin sisäiset muutokset)
     let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "").replace(/\{[^}]*\}/g, "");
     const regex = /([|])|([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
     
@@ -73,10 +68,9 @@ function getFingerprint(abc) {
 
     while ((match = regex.exec(clean)) !== null) {
         if (match[1] === '|') {
-            barAccidentals = {}; // Nollaa etumerkit tahdin vaihtuessa
+            barAccidentals = {}; 
             continue;
         }
-
         let acc = match[2];
         const note = match[3];
         const oct = match[4];
@@ -107,14 +101,8 @@ function getFingerprint(abc) {
     let fp = [];
     for (let i = 1; i < notes.length; i++) {
         let interval = notes[i].pitch - notes[i-1].pitch;
-        
-        // Lasketaan suhde
         let ratio = notes[i].duration / notes[i-1].duration;
-        
-        // Pyöristetään suhde yhteen desimaaliin.
-        // Esim. 0.333 -> 0.3 ja 3.0 -> 3
         let durRatio = Number(ratio.toFixed(1));
-        
         fp.push(`${interval}:${durRatio}`);
     }
     return "|" + fp.join("|") + "|";
@@ -168,7 +156,6 @@ function handleSearch() {
     let rawFP = getFingerprint(input);
     if (!rawFP) return;
 
-    // OTETAAN VAIN INTERVALLIT (esim. "|5:1|-3:0.5|" -> "5|-3")
     let searchIntervals = rawFP.split('|')
                                .filter(x => x.length > 0)
                                .map(x => x.split(':')[0])
@@ -176,13 +163,10 @@ function handleSearch() {
 
     const matches = window.melodyLibrary.filter(t => {
         if (!t.fingerprint) return false;
-        
-        // Puhdistetaan myös kirjaston sormenjälki kestoista vertailun ajaksi
         let libIntervals = t.fingerprint.split('|')
                                        .filter(x => x.length > 0)
                                        .map(x => x.split(':')[0])
                                        .join('|');
-        
         return libIntervals.includes(searchIntervals);
     });
 
@@ -208,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
     const abcEditor = document.getElementById('searchQuery');
 
+    // Kesto-napit
     document.querySelectorAll('.dur-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -216,11 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Piste-nappi
     document.getElementById('dot-btn').addEventListener('click', (e) => {
         isDottedMode = !isDottedMode;
         e.target.classList.toggle('active', isDottedMode);
     });
 
+    // Etumerkki-napit
     document.querySelectorAll('.acc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             selectedAccidental = btn.classList.contains('active') ? "" : btn.getAttribute('data-acc');
@@ -229,53 +216,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Nuotti-napit
     document.querySelectorAll('.note-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const note = btn.getAttribute('data-note');
-        const abcEditor = document.getElementById('searchQuery');
-        let dur = selectedDuration; // Oletus: valittu kesto (1, 2, /2, /4)
-        
-        if (isDottedMode && note !== 'z') {
-            // Lasketaan pisteellinen kesto matemaattisesti suhteessa valittuun kestoon
-            if (selectedDuration === "1") {
-                dur = "3/2"; // Pisteellinen neljäsosa (1.5)
-            } else if (selectedDuration === "2") {
-                dur = "3";   // Pisteellinen puolinuotti (3.0)
-            } else if (selectedDuration === "/2") {
-                dur = "3/4"; // Pisteellinen kahdeksasosa (0.75)
-            } else if (selectedDuration === "/4") {
-                dur = "3/8"; // Pisteellinen 16-osanuotti (0.375)
-            }
+        btn.addEventListener('click', () => {
+            const note = btn.getAttribute('data-note');
+            let dur = selectedDuration;
             
-            // Nollataan piste-tila käytön jälkeen
-            isDottedMode = false;
-            const dotBtn = document.getElementById('dot-btn');
-            if (dotBtn) dotBtn.classList.remove('active');
-        } else if (selectedDuration === "1") {
-            // ABC-notaatiossa "1" on tyhjä (oletuspituus)
-            dur = "";
-        }
+            if (isDottedMode && note !== 'z') {
+                if (selectedDuration === "1") dur = "3/2";
+                else if (selectedDuration === "2") dur = "3";
+                else if (selectedDuration === "/2") dur = "3/4";
+                else if (selectedDuration === "/4") dur = "3/8";
+                
+                isDottedMode = false;
+                const dotBtn = document.getElementById('dot-btn');
+                if (dotBtn) dotBtn.classList.remove('active');
+            } else if (selectedDuration === "1") {
+                dur = "";
+            }
 
-        const noteString = selectedAccidental + note + dur + " ";
-        
-        // Lisätään teksti kursorin kohdalle
-        const start = abcEditor.selectionStart;
-        const end = abcEditor.selectionEnd;
-        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-        
-        // Siirretään kursori uuden nuotin loppuun
-        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-        
-        // Nollataan etumerkki
-        selectedAccidental = "";
-        document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
-        
-        abcEditor.focus();
-        handleSearch();
+            const noteString = selectedAccidental + note + dur + " ";
+            const start = abcEditor.selectionStart;
+            const end = abcEditor.selectionEnd;
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
+            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            
+            selectedAccidental = "";
+            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
+            
+            abcEditor.focus();
+            handleSearch();
+        });
     });
-});
 
+    // Tekstikentän muutokset
     abcEditor.addEventListener('input', handleSearch);
+
+    // Tyhjennys
     document.getElementById('clearSearch').addEventListener('click', () => {
         abcEditor.value = "";
         handleSearch();
