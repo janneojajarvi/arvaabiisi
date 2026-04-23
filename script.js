@@ -188,19 +188,18 @@ function handleSearch() {
             const div = document.createElement('div');
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
-           div.onclick = () => {
+           div.onclick = async () => {
     currentAbc = tune.abc;
-    const visualObj = ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' })[0];
     
-    // Näytetään soittimen säätimet
+    // 1. Piirretään nuotit (lisätään Q:100, jotta tempo on oikea)
+    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
+    const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
+    
     document.getElementById('audio-controls').style.display = 'block';
 
-    // Alustetaan soitin
     if (ABCJS.synth.supportsAudio()) {
-        const synth = new ABCJS.synth.CreateSynth();
-        
-        synth.init({ visualObj: visualObj }).then(() => {
-            // Luodaan käyttöliittymäkontrollit (Play/Stop)
+        try {
+            // 2. Jos soitinohjainta ei ole, luodaan se
             if (!synthControl) {
                 synthControl = new ABCJS.synth.SynthController();
                 synthControl.load("#audio-controls", null, {
@@ -210,10 +209,20 @@ function handleSearch() {
                     displayWarp: true
                 });
             }
-            synthControl.setTune(visualObj, false).then(() => {
-                console.log("Audio ladattu.");
-            });
-        }).catch(console.error);
+
+            // 3. Luodaan uusi syntetisaattori ja asetetaan uusi kappale
+            const synth = new ABCJS.synth.CreateSynth();
+            
+            // Tärkeä vaihe: alustetaan ja asetetaan uusi nuottiolio
+            await synth.init({ visualObj: visualObj });
+            
+            // setTune-metodi päivittää soittimen käyttöliittymän vastaamaan uutta biisiä
+            await synthControl.setTune(visualObj, false);
+            
+            console.log("Soitin päivitetty kappaleeseen:", tune.name);
+        } catch (error) {
+            console.error("Soittimen päivitys epäonnistui:", error);
+        }
     }
     
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
