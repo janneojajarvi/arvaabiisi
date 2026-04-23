@@ -191,12 +191,7 @@ function handleSearch() {
            div.onclick = async () => {
     currentAbc = tune.abc;
     
-    // 1. Pysäytetään nykyinen soitto heti, jos sellainen on
-    if (synthControl) {
-        synthControl.pause();
-    }
-
-    // 2. Piirretään nuotit (pakotetaan tempo Q:100)
+    // 1. Piirretään nuotit (lisätään Q:100, jotta tempo on oikea)
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
@@ -204,14 +199,7 @@ function handleSearch() {
 
     if (ABCJS.synth.supportsAudio()) {
         try {
-            // 3. Luodaan uusi Synth-instanssi joka kerta
-            const synth = new ABCJS.synth.CreateSynth();
-            
-            // 4. Alustetaan audio. TÄRKEÄÄ: Odotetaan että init ja prime ovat valmiita.
-            await synth.init({ visualObj: visualObj });
-            await synth.prime(); // Valmistelee puskurin ennen soittoon kytkemistä
-            
-            // 5. Jos ohjainta ei ole, luodaan se kerran
+            // 2. Jos soitinohjainta ei ole, luodaan se
             if (!synthControl) {
                 synthControl = new ABCJS.synth.SynthController();
                 synthControl.load("#audio-controls", null, {
@@ -222,13 +210,18 @@ function handleSearch() {
                 });
             }
 
-            // 6. Kytketään uusi visualObj ohjaimeen
-            // Toinen parametri on "true", jos haluat soittaa heti latauksesta (ei suositeltu)
+            // 3. Luodaan uusi syntetisaattori ja asetetaan uusi kappale
+            const synth = new ABCJS.synth.CreateSynth();
+            
+            // Tärkeä vaihe: alustetaan ja asetetaan uusi nuottiolio
+            await synth.init({ visualObj: visualObj });
+            
+            // setTune-metodi päivittää soittimen käyttöliittymän vastaamaan uutta biisiä
             await synthControl.setTune(visualObj, false);
             
-            console.log("Soitin päivitetty onnistuneesti!");
+            console.log("Soitin päivitetty kappaleeseen:", tune.name);
         } catch (error) {
-            console.warn("Audio-ongelma (todennäköisesti vaatii klikkauksen):", error);
+            console.error("Soittimen päivitys epäonnistui:", error);
         }
     }
     
