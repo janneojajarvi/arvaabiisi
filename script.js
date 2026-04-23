@@ -189,6 +189,7 @@ function handleSearch() {
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
           div.onclick = function() {
+              document.getElementById('audio-controls').innerHTML = "";
     currentAbc = tune.abc;
     
     // 1. Pysäytetään vanha soitto ja nollataan ohjain
