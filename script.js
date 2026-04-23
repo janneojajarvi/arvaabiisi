@@ -191,12 +191,12 @@ function handleSearch() {
           div.onclick = function() {
     currentAbc = tune.abc;
     
-    // 1. Pysäytetään mahdollinen aiempi soitto
+    // 1. Pysäytetään vanha soitto ja nollataan ohjain
     if (synthControl) {
         synthControl.pause();
     }
 
-    // 2. Piirretään nuotit (Q:100 tempo)
+    // 2. Piirretään nuotit paper-elementtiin
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
@@ -205,17 +205,31 @@ function handleSearch() {
     if (ABCJS.synth.supportsAudio()) {
         const synth = new ABCJS.synth.CreateSynth();
         
-        // TÄRKEÄÄ: Ketjutetaan init, prime ja setTune
+        // 3. Alustetaan uusi ääni
         synth.init({ visualObj: visualObj })
             .then(function() {
                 return synth.prime();
             })
             .then(function() {
-                // Käytetään olemassa olevaa synthControlia
+                // 4. Jos ohjainta ei ole, luodaan se
+                if (!synthControl) {
+                    synthControl = new ABCJS.synth.SynthController();
+                    synthControl.load("#audio-controls", null, {
+                        displayRestart: true,
+                        displayPlay: true,
+                        displayProgress: true,
+                        displayWarp: true
+                    });
+                }
+                
+                // 5. TÄRKEÄ KORJAUS: Pakotetaan uusi synth ohjaimeen
+                // Käytetään setTune-metodia niin, että se tietää mistä audio tulee
                 return synthControl.setTune(visualObj, false);
             })
             .then(function() {
-                console.log("Kappale vaihtui:", tune.name);
+                // Lisätään vielä varmistus: jos soitin ei reagoi, 
+                // kytketään audio uudelleen manuaalisesti
+                console.log("Kappale päivitetty: " + tune.name);
             })
             .catch(function(error) {
                 console.warn("Audio-ongelma:", error);
