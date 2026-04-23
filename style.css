@@ -128,3 +128,31 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     background: #f06292 !important;
     color: white;
 }
+
+.button-group {
+    display: flex;      /* Asettaa elementit vierekkäin */
+    gap: 10px;          /* Jättää pienen raon nappien välille */
+    margin-top: 15px;   /* Lisää hieman tilaa tekstikentän ja nappien välille */
+    width: 100%;        /* Varmistaa, että ryhmä vie koko leveyden */
+}
+
+.button-group button {
+    flex: 1;            /* Tekee napeista samanlevuiset */
+    padding: 12px;      /* Tekee napeista helpommin painettavat mobiilissa */
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+/* Voit tyylitellä haku-napin erottumaan */
+#search-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    font-weight: bold;
+}
+
+#clearSearch {
+    background-color: #f8f9fa;
+    color: #333;
+}
