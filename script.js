@@ -203,9 +203,20 @@ function handleSearch() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
+    
+    // Määritellään editori heti alussa, jotta kaikki funktiot löytävät sen
     const abcEditor = document.getElementById('searchQuery');
 
-    // Kesto-napit
+    // 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
+    abcEditor.addEventListener('input', () => {
+        const input = abcEditor.value;
+        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { 
+            responsive: 'resize', 
+            scale: 0.7 
+        });
+    });
+
+    // 2. Kesto-napit
     document.querySelectorAll('.dur-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -214,13 +225,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Piste-nappi
-    document.getElementById('dot-btn').addEventListener('click', (e) => {
-        isDottedMode = !isDottedMode;
-        e.target.classList.toggle('active', isDottedMode);
-    });
+    // 3. Piste-nappi
+    const dotBtn = document.getElementById('dot-btn');
+    if (dotBtn) {
+        dotBtn.addEventListener('click', (e) => {
+            isDottedMode = !isDottedMode;
+            e.target.classList.toggle('active', isDottedMode);
+        });
+    }
 
-    // Etumerkki-napit
+    // 4. Etumerkki-napit
     document.querySelectorAll('.acc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             selectedAccidental = btn.classList.contains('active') ? "" : btn.getAttribute('data-acc');
@@ -229,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Nuotti-napit
+    // 5. Nuotti-napit (TÄMÄ PÄIVITTÄÄ NYT MYÖS VIIVASTON)
     document.querySelectorAll('.note-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
@@ -242,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (selectedDuration === "/4") dur = "3/8";
                 
                 isDottedMode = false;
-                const dotBtn = document.getElementById('dot-btn');
                 if (dotBtn) dotBtn.classList.remove('active');
             } else if (selectedDuration === "1") {
                 dur = "";
@@ -251,36 +264,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const noteString = selectedAccidental + note + dur + " ";
             const start = abcEditor.selectionStart;
             const end = abcEditor.selectionEnd;
+            
+            // Lisätään teksti
             abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
             
+            // Nollataan etumerkit
             selectedAccidental = "";
             document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
             
             abcEditor.focus();
-         
+
+            // PÄIVITYS: Piirretään viivasto heti napin painalluksen jälkeen
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
         });
     });
 
-   // Päivitetään VAIN nuottien esikatselu, kun kirjoitetaan
-    abcEditor.addEventListener('input', () => {
-        const input = abcEditor.value;
-        // Piirretään vain kirjoitettu pätkä, ei tehdä hakua vielä
-        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { 
-            responsive: 'resize', 
-            scale: 0.7 
+    // 6. Hae-nappi
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            handleSearch();
         });
-    });
+    }
 
-    // VARSINAINEN HAKU käynnistyy tästä napista
-    document.getElementById('search-btn').addEventListener('click', () => {
-        handleSearch(); // Suoritetaan haku kirjastosta
-    });
-
-    document.getElementById('clearSearch').addEventListener('click', () => {
-        abcEditor.value = "";
-        document.getElementById('results-list').innerHTML = "";
-        document.getElementById('match-count').innerText = "0";
-        ABCJS.renderAbc("search-preview", ""); // Tyhjennetään myös esikatselu
-    });
+    // 7. Tyhjennys
+    const clearBtn = document.getElementById('clearSearch');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            abcEditor.value = "";
+            document.getElementById('results-list').innerHTML = "";
+            document.getElementById('match-count').innerText = "0";
+            ABCJS.renderAbc("search-preview", ""); 
+        });
+    }
 });
