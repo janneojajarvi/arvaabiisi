@@ -350,9 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 5. PÄIVITYS
         // Kutsumalla handleSearch() hoituu sekä nuottikuva että hakutulokset
-        handleSearch();
-        });
-    }
+        handleSearch(); 
+    });
+});
 
 // Etsi backspace-painike
 const backspaceBtn = document.getElementById('backspace-btn');
