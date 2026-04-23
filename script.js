@@ -222,18 +222,13 @@ function handleSearch() {
                 });
             }
 
-            // 3. Luodaan uusi syntetisaattori ja asetetaan uusi kappale
-            const synth = new ABCJS.synth.CreateSynth();
-            
-            // Tärkeä vaihe: alustetaan ja asetetaan uusi nuottiolio
-            await synth.init({ visualObj: visualObj });
-            
-            // setTune-metodi päivittää soittimen käyttöliittymän vastaamaan uutta biisiä
+            // 6. Kytketään uusi visualObj ohjaimeen
+            // Toinen parametri on "true", jos haluat soittaa heti latauksesta (ei suositeltu)
             await synthControl.setTune(visualObj, false);
             
-            console.log("Soitin päivitetty kappaleeseen:", tune.name);
+            console.log("Soitin päivitetty onnistuneesti!");
         } catch (error) {
-            console.error("Soittimen päivitys epäonnistui:", error);
+            console.warn("Audio-ongelma (todennäköisesti vaatii klikkauksen):", error);
         }
     }
     
