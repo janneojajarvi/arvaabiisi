@@ -12,6 +12,8 @@ const urls = [
 let selectedDuration = "1";
 let selectedAccidental = ""; 
 let isDottedMode = false;
+let synthControl;
+let currentAbc;
 
 // --- APUFUNKTIOT ---
 
@@ -187,11 +189,35 @@ function handleSearch() {
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
             div.onclick = () => {
-                ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            };
-            list.appendChild(div);
-        });
+    currentAbc = tune.abc;
+    const visualObj = ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' })[0];
+    
+    // Näytetään soittimen säätimet
+    document.getElementById('audio-controls').style.display = 'block';
+
+    // Alustetaan soitin
+    if (ABCJS.synth.supportsAudio()) {
+        const synth = new ABCJS.synth.CreateSynth();
+        
+        synth.init({ visualObj: visualObj }).then(() => {
+            // Luodaan käyttöliittymäkontrollit (Play/Stop)
+            if (!synthControl) {
+                synthControl = new ABCJS.synth.SynthController();
+                synthControl.load("#audio-controls", null, {
+                    displayRestart: true,
+                    displayPlay: true,
+                    displayProgress: true,
+                    displayWarp: true
+                });
+            }
+            synthControl.setTune(visualObj, false).then(() => {
+                console.log("Audio ladattu.");
+            });
+        }).catch(console.error);
+    }
+    
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
 
         // Palautetaan nappi ennalleen
         searchBtn.innerText = "Hae kappaleita";
