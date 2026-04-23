@@ -12,10 +12,6 @@ const urls = [
 let selectedDuration = "1";
 let selectedAccidental = ""; 
 let isDottedMode = false;
-let synthControl;
-let currentAbc;
-let audioContext;
-let feedbackSynth;
 
 // --- APUFUNKTIOT ---
 
@@ -32,36 +28,6 @@ function getPitchValue(acc, note, oct) {
     if (acc === '^') p += 1;
     if (acc === '_') p -= 1;
     return p;
-}
-
-async function playNoteFeedback(pitch) {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    
-    // Jos audioContext on "suspended" (selainten turvarajoitus), herätetään se
-    if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-    }
-
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.type = 'triangle'; // Pehmeä ääni, vähän kuin huuliharppu tai huilu
-    
-    // Muunnetaan puolisävelaskeleet taajuudeksi (A4 = 440Hz)
-    // Lasketaan pitch-arvosta (jossa 60 on C4)
-    const frequency = 440 * Math.pow(2, (pitch - 69) / 12);
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.5);
 }
 
 function getFingerprint(abc) {
@@ -221,35 +187,9 @@ function handleSearch() {
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
             div.onclick = () => {
-    currentAbc = tune.abc;
-    const visualObj = ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' })[0];
-    
-    // Näytetään soittimen säätimet
-    document.getElementById('audio-controls').style.display = 'block';
-
-    // Alustetaan soitin
-    if (ABCJS.synth.supportsAudio()) {
-        const synth = new ABCJS.synth.CreateSynth();
-        
-        synth.init({ visualObj: visualObj }).then(() => {
-            // Luodaan käyttöliittymäkontrollit (Play/Stop)
-            if (!synthControl) {
-                synthControl = new ABCJS.synth.SynthController();
-                synthControl.load("#audio-controls", null, {
-                    displayRestart: true,
-                    displayPlay: true,
-                    displayProgress: true,
-                    displayWarp: true
-                });
-            }
-            synthControl.setTune(visualObj, false).then(() => {
-                console.log("Audio ladattu.");
-            });
-        }).catch(console.error);
-    }
-    
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-};
+                ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            };
             list.appendChild(div);
         });
 
@@ -305,54 +245,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Nuotti-napit (TÄMÄ PÄIVITTÄÄ NYT MYÖS VIIVASTON)
     document.querySelectorAll('.note-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const note = btn.getAttribute('data-note');
-        const abcEditor = document.getElementById('searchQuery'); // Haetaan varmuuden vuoksi
-        const dotBtn = document.getElementById('dot-btn');        // Haetaan varmuuden vuoksi
-
-        if (!abcEditor) return;
-
-        // 1. ÄÄNIPALAUTE
-        // Huom: pitch lasketaan ennen etumerkin nollausta
-        if (note !== 'z') {
-            const oct = ""; 
-            const pitch = getPitchValue(selectedAccidental, note, oct);
-            playNoteFeedback(pitch);
-        }
-
-        // 2. KESTON MÄÄRITYS
-        let dur = selectedDuration;
-        if (isDottedMode && note !== 'z') {
-            if (selectedDuration === "1") dur = "3/2";
-            else if (selectedDuration === "2") dur = "3";
-            else if (selectedDuration === "/2") dur = "3/4";
-            else if (selectedDuration === "/4") dur = "3/8";
+        btn.addEventListener('click', () => {
+            const note = btn.getAttribute('data-note');
+            let dur = selectedDuration;
             
-            isDottedMode = false;
-            if (dotBtn) dotBtn.classList.remove('active');
-        } else if (selectedDuration === "1") {
-            dur = ""; // ABC-standardissa 1 on tyhjä
-        }
+            if (isDottedMode && note !== 'z') {
+                if (selectedDuration === "1") dur = "3/2";
+                else if (selectedDuration === "2") dur = "3";
+                else if (selectedDuration === "/2") dur = "3/4";
+                else if (selectedDuration === "/4") dur = "3/8";
+                
+                isDottedMode = false;
+                if (dotBtn) dotBtn.classList.remove('active');
+            } else if (selectedDuration === "1") {
+                dur = "";
+            }
 
-        // 3. TEKSTIN LISÄÄMINEN
-        const noteString = selectedAccidental + note + dur + " ";
-        const start = abcEditor.selectionStart;
-        const end = abcEditor.selectionEnd;
-        
-        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-        
-        // 4. ETUMERKKIEN NOLLAUS
-        selectedAccidental = "";
-        document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
-        
-        abcEditor.focus();
+            const noteString = selectedAccidental + note + dur + " ";
+            const start = abcEditor.selectionStart;
+            const end = abcEditor.selectionEnd;
+            
+            // Lisätään teksti
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
+            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            
+            // Nollataan etumerkit
+            selectedAccidental = "";
+            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
+            
+            abcEditor.focus();
 
-        // 5. PÄIVITYS
-        // Kutsumalla handleSearch() hoituu sekä nuottikuva että hakutulokset
-        handleSearch(); 
+            // PÄIVITYS: Piirretään viivasto heti napin painalluksen jälkeen
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
+        });
     });
-});
+
+    // 6. Hae-nappi
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            handleSearch();
+        });
+    }
 
 // Etsi backspace-painike
 const backspaceBtn = document.getElementById('backspace-btn');
