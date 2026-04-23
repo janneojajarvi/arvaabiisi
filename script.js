@@ -14,6 +14,8 @@ let selectedAccidental = "";
 let isDottedMode = false;
 let synthControl;
 let currentAbc;
+let audioContext;
+let feedbackSynth;
 
 // --- APUFUNKTIOT ---
 
@@ -30,6 +32,36 @@ function getPitchValue(acc, note, oct) {
     if (acc === '^') p += 1;
     if (acc === '_') p -= 1;
     return p;
+}
+
+async function playNoteFeedback(pitch) {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Jos audioContext on "suspended" (selainten turvarajoitus), herätetään se
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = 'triangle'; // Pehmeä ääni, vähän kuin huuliharppu tai huilu
+    
+    // Muunnetaan puolisävelaskeleet taajuudeksi (A4 = 440Hz)
+    // Lasketaan pitch-arvosta (jossa 60 on C4)
+    const frequency = 440 * Math.pow(2, (pitch - 69) / 12);
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.5);
 }
 
 function getFingerprint(abc) {
@@ -275,6 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.note-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
+            if (note === 'z') return; // Ei ääntä tauolle
+
+        const oct = ""; // Voit laajentaa tätä, jos napeissa on oktaavitietoa
+        const pitch = getPitchValue(selectedAccidental, note, oct);
+        
+        // SOITA ÄÄNI TÄSSÄ
+        playNoteFeedback(pitch);
             let dur = selectedDuration;
             
             if (isDottedMode && note !== 'z') {
