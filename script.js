@@ -202,8 +202,8 @@ function handleSearch() {
     audioContainer.innerHTML = "";
     audioContainer.style.display = 'block';
 
-    // 2. Piirretään nuotit (Q:100 tempo)
-    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:80\n" + tune.abc;
+    // 2. Piirretään nuotit (Q:80 tempo)
+    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:20\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
     if (ABCJS.synth.supportsAudio()) {
