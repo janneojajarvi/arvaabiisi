@@ -204,7 +204,14 @@ function handleSearch() {
 
     if (ABCJS.synth.supportsAudio()) {
         try {
-            // 2. Jos soitinohjainta ei ole, luodaan se
+            // 3. Luodaan uusi Synth-instanssi joka kerta
+            const synth = new ABCJS.synth.CreateSynth();
+            
+            // 4. Alustetaan audio. TÄRKEÄÄ: Odotetaan että init ja prime ovat valmiita.
+            await synth.init({ visualObj: visualObj });
+            await synth.prime(); // Valmistelee puskurin ennen soittoon kytkemistä
+            
+            // 5. Jos ohjainta ei ole, luodaan se kerran
             if (!synthControl) {
                 synthControl = new ABCJS.synth.SynthController();
                 synthControl.load("#audio-controls", null, {
