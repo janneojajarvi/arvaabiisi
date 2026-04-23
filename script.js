@@ -291,6 +291,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+// Etsi backspace-painike
+const backspaceBtn = document.getElementById('backspace-btn');
+
+if (backspaceBtn) {
+    backspaceBtn.addEventListener('click', () => {
+        const start = abcEditor.selectionStart;
+        const end = abcEditor.selectionEnd;
+        const value = abcEditor.value;
+
+        if (start === end && start > 0) {
+            // Jos tekstiä ei ole maalattu, poistetaan yksi merkki kursorin vasemmalta puolelta
+            // Huom: Poistetaan myös mahdollinen välilyönti nuotin perästä
+            let deleteCount = 1;
+            if (value[start - 1] === ' ') {
+                // Jos edellinen merkki on välilyönti, katsotaan onko sen edellä vielä nuotti
+                abcEditor.value = value.slice(0, start - 1) + value.slice(end);
+                abcEditor.selectionStart = abcEditor.selectionEnd = start - 1;
+            } else {
+                abcEditor.value = value.slice(0, start - 1) + value.slice(end);
+                abcEditor.selectionStart = abcEditor.selectionEnd = start - 1;
+            }
+        } else if (start !== end) {
+            // Jos tekstiä on maalattu, poistetaan valittu alue
+            abcEditor.value = value.slice(0, start) + value.slice(end);
+            abcEditor.selectionStart = abcEditor.selectionEnd = start;
+        }
+
+        // Muistetaan päivittää nuottiviivasto poiston jälkeen!
+        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+            responsive: 'resize', 
+            scale: 0.7 
+        });
+
+        abcEditor.focus();
+    });
+}
+    
     // 7. Tyhjennys
     const clearBtn = document.getElementById('clearSearch');
     if (clearBtn) {
