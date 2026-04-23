@@ -144,46 +144,59 @@ async function initApp() {
 function handleSearch() {
     const abcEditor = document.getElementById('searchQuery');
     const input = abcEditor.value;
-    
-    ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { responsive: 'resize', scale: 0.7 });
+    const searchBtn = document.getElementById('search-btn');
 
     if (input.replace(/\s/g, "").length < 3) {
-        document.getElementById('results-list').innerHTML = "";
-        document.getElementById('match-count').innerText = "0";
+        alert("Kirjoita vähintään 3 nuottia ennen hakua.");
         return;
     }
 
-    let rawFP = getFingerprint(input);
-    if (!rawFP) return;
+    // Muutetaan napin teksti hetkeksi
+    searchBtn.innerText = "Etsitään...";
+    searchBtn.disabled = true;
 
-    let searchIntervals = rawFP.split('|')
-                               .filter(x => x.length > 0)
-                               .map(x => x.split(':')[0])
-                               .join('|');
+    // Käytetään setTimeoutia, jotta "Etsitään..." ehtii piirtyä ennen raskasta hakua
+    setTimeout(() => {
+        let rawFP = getFingerprint(input);
+        if (!rawFP) {
+            searchBtn.innerText = "Hae kappaleita";
+            searchBtn.disabled = false;
+            return;
+        }
 
-    const matches = window.melodyLibrary.filter(t => {
-        if (!t.fingerprint) return false;
-        let libIntervals = t.fingerprint.split('|')
-                                       .filter(x => x.length > 0)
-                                       .map(x => x.split(':')[0])
-                                       .join('|');
-        return libIntervals.includes(searchIntervals);
-    });
+        let searchIntervals = rawFP.split('|')
+                                   .filter(x => x.length > 0)
+                                   .map(x => x.split(':')[0])
+                                   .join('|');
 
-    const list = document.getElementById('results-list');
-    document.getElementById('match-count').innerText = matches.length;
-    list.innerHTML = "";
+        const matches = window.melodyLibrary.filter(t => {
+            if (!t.fingerprint) return false;
+            let libIntervals = t.fingerprint.split('|')
+                                           .filter(x => x.length > 0)
+                                           .map(x => x.split(':')[0])
+                                           .join('|');
+            return libIntervals.includes(searchIntervals);
+        });
 
-    matches.slice(0, 30).forEach(tune => {
-        const div = document.createElement('div');
-        div.className = 'tune-card';
-        div.innerHTML = `<h3>${tune.name}</h3>`;
-        div.onclick = () => {
-            ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        };
-        list.appendChild(div);
-    });
+        const list = document.getElementById('results-list');
+        document.getElementById('match-count').innerText = matches.length;
+        list.innerHTML = "";
+
+        matches.slice(0, 50).forEach(tune => {
+            const div = document.createElement('div');
+            div.className = 'tune-card';
+            div.innerHTML = `<h3>${tune.name}</h3>`;
+            div.onclick = () => {
+                ABCJS.renderAbc("paper", tune.abc, { responsive: 'resize' });
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            };
+            list.appendChild(div);
+        });
+
+        // Palautetaan nappi ennalleen
+        searchBtn.innerText = "Hae kappaleita";
+        searchBtn.disabled = false;
+    }, 50);
 }
 
 // --- TAPAHTUMAT ---
@@ -249,12 +262,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Tekstikentän muutokset
-    abcEditor.addEventListener('input', handleSearch);
+   // Päivitetään VAIN nuottien esikatselu, kun kirjoitetaan
+    abcEditor.addEventListener('input', () => {
+        const input = abcEditor.value;
+        // Piirretään vain kirjoitettu pätkä, ei tehdä hakua vielä
+        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { 
+            responsive: 'resize', 
+            scale: 0.7 
+        });
+    });
 
-    // Tyhjennys
+    // VARSINAINEN HAKU käynnistyy tästä napista
+    document.getElementById('search-btn').addEventListener('click', () => {
+        handleSearch(); // Suoritetaan haku kirjastosta
+    });
+
     document.getElementById('clearSearch').addEventListener('click', () => {
         abcEditor.value = "";
-        handleSearch();
+        document.getElementById('results-list').innerHTML = "";
+        document.getElementById('match-count').innerText = "0";
+        ABCJS.renderAbc("search-preview", ""); // Tyhjennetään myös esikatselu
     });
 });
