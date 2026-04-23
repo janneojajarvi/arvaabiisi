@@ -189,47 +189,44 @@ function handleSearch() {
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
           div.onclick = function() {
-              document.getElementById('audio-controls').innerHTML = "";
     currentAbc = tune.abc;
     
-    // 1. Pysäytetään vanha soitto ja nollataan ohjain
+    // 1. Pysäytetään vanha soitto ja tuhotaan vanha ohjain muistista
     if (synthControl) {
         synthControl.pause();
+        synthControl = null; // Pakotetaan ohjain nollaksi
     }
+    
+    // Tyhjennetään soittimen alue fyysisesti
+    const audioContainer = document.getElementById('audio-controls');
+    audioContainer.innerHTML = "";
+    audioContainer.style.display = 'block';
 
-    // 2. Piirretään nuotit paper-elementtiin
+    // 2. Piirretään nuotit (Q:100 tempo)
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
-    document.getElementById('audio-controls').style.display = 'block';
-
     if (ABCJS.synth.supportsAudio()) {
         const synth = new ABCJS.synth.CreateSynth();
         
-        // 3. Alustetaan uusi ääni
         synth.init({ visualObj: visualObj })
             .then(function() {
                 return synth.prime();
             })
             .then(function() {
-                // 4. Jos ohjainta ei ole, luodaan se
-                if (!synthControl) {
-                    synthControl = new ABCJS.synth.SynthController();
-                    synthControl.load("#audio-controls", null, {
-                        displayRestart: true,
-                        displayPlay: true,
-                        displayProgress: true,
-                        displayWarp: true
-                    });
-                }
+                // 3. Luodaan ohjain täysin alusta puhtaaseen elementtiin
+                synthControl = new ABCJS.synth.SynthController();
+                synthControl.load("#audio-controls", null, {
+                    displayRestart: true,
+                    displayPlay: true,
+                    displayProgress: true,
+                    displayWarp: true
+                });
                 
-                // 5. TÄRKEÄ KORJAUS: Pakotetaan uusi synth ohjaimeen
-                // Käytetään setTune-metodia niin, että se tietää mistä audio tulee
+                // 4. Kytketään uusi biisi
                 return synthControl.setTune(visualObj, false);
             })
             .then(function() {
-                // Lisätään vielä varmistus: jos soitin ei reagoi, 
-                // kytketään audio uudelleen manuaalisesti
                 console.log("Kappale päivitetty: " + tune.name);
             })
             .catch(function(error) {
