@@ -224,7 +224,7 @@ function handleSearch() {
                 });
                 
                 // 4. Kytketään uusi biisi
-                return synthControl.setTune(visualObj, false);
+                return synthControl.setTune(visualObj, false, { bpm: 100 });
             })
             .then(function() {
                 console.log("Kappale päivitetty: " + tune.name);
