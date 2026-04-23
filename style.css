@@ -156,3 +156,18 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     background-color: #f8f9fa;
     color: #333;
 }
+
+#audio-controls {
+    background: #f4f4f4;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+/* Piilotetaan oletuspainikkeet, jos haluat käyttää omia painikkeitasi, 
+   tai jätä nämä pois jos haluat käyttää abcjs:n valmiita säätimiä. */
+.abcjs-pwa-buttons {
+    display: flex;
+    gap: 10px;
+}
