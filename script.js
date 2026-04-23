@@ -188,41 +188,46 @@ function handleSearch() {
             const div = document.createElement('div');
             div.className = 'tune-card';
             div.innerHTML = `<h3>${tune.name}</h3>`;
-           div.onclick = async () => {
+           div.onclick = function() {
     currentAbc = tune.abc;
     
-    // 1. Piirretään nuotit (lisätään Q:100, jotta tempo on oikea)
+    // 1. Pysäytetään vanha soitto heti
+    if (synthControl) {
+        synthControl.pause();
+    }
+
+    // 2. Piirretään nuotit (pakotetaan tempo Q:100)
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
     const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
     
     document.getElementById('audio-controls').style.display = 'block';
 
     if (ABCJS.synth.supportsAudio()) {
-        try {
-            // 2. Jos soitinohjainta ei ole, luodaan se
-            if (!synthControl) {
-                synthControl = new ABCJS.synth.SynthController();
-                synthControl.load("#audio-controls", null, {
-                    displayRestart: true,
-                    displayPlay: true,
-                    displayProgress: true,
-                    displayWarp: true
-                });
-            }
-
-            // 3. Luodaan uusi syntetisaattori ja asetetaan uusi kappale
-            const synth = new ABCJS.synth.CreateSynth();
-            
-            // Tärkeä vaihe: alustetaan ja asetetaan uusi nuottiolio
-            await synth.init({ visualObj: visualObj });
-            
-            // setTune-metodi päivittää soittimen käyttöliittymän vastaamaan uutta biisiä
-            await synthControl.setTune(visualObj, false);
-            
-            console.log("Soitin päivitetty kappaleeseen:", tune.name);
-        } catch (error) {
-            console.error("Soittimen päivitys epäonnistui:", error);
-        }
+        // 3. Luodaan uusi syntetisaattori
+        const synth = new ABCJS.synth.CreateSynth();
+        
+        // 4. Alustetaan ja asetetaan uusi kappale ilman monimutkaista async-ketjua
+        synth.init({ visualObj: visualObj })
+            .then(function() {
+                return synth.prime();
+            })
+            .then(function() {
+                // 5. Luodaan ohjain jos sitä ei ole
+                if (!synthControl) {
+                    synthControl = new ABCJS.synth.SynthController();
+                    synthControl.load("#audio-controls", null, {
+                        displayRestart: true,
+                        displayPlay: true,
+                        displayProgress: true,
+                        displayWarp: true
+                    });
+                }
+                // 6. Päivitetään uusi biisi ohjaimeen
+                return synthControl.setTune(visualObj, false);
+            })
+            .catch(function(error) {
+                console.warn("Audio-virhe:", error);
+            });
     }
     
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
