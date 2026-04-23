@@ -212,7 +212,7 @@ function handleSearch() {
 
             // 3. Luodaan uusi syntetisaattori ja asetetaan uusi kappale
             const synth = new ABCJS.synth.CreateSynth();
-            
+            if (synthControl) synthControl.pause();
             // Tärkeä vaihe: alustetaan ja asetetaan uusi nuottiolio
             await synth.init({ visualObj: visualObj });
             
