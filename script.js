@@ -305,56 +305,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Nuotti-napit (TÄMÄ PÄIVITTÄÄ NYT MYÖS VIIVASTON)
     document.querySelectorAll('.note-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const note = btn.getAttribute('data-note');
-            if (note === 'z') return; // Ei ääntä tauolle
+    btn.addEventListener('click', () => {
+        const note = btn.getAttribute('data-note');
+        const abcEditor = document.getElementById('searchQuery'); // Haetaan varmuuden vuoksi
+        const dotBtn = document.getElementById('dot-btn');        // Haetaan varmuuden vuoksi
 
-        const oct = ""; // Voit laajentaa tätä, jos napeissa on oktaavitietoa
-        const pitch = getPitchValue(selectedAccidental, note, oct);
+        if (!abcEditor) return;
+
+        // 1. ÄÄNIPALAUTE
+        // Huom: pitch lasketaan ennen etumerkin nollausta
+        if (note !== 'z') {
+            const oct = ""; 
+            const pitch = getPitchValue(selectedAccidental, note, oct);
+            playNoteFeedback(pitch);
+        }
+
+        // 2. KESTON MÄÄRITYS
+        let dur = selectedDuration;
+        if (isDottedMode && note !== 'z') {
+            if (selectedDuration === "1") dur = "3/2";
+            else if (selectedDuration === "2") dur = "3";
+            else if (selectedDuration === "/2") dur = "3/4";
+            else if (selectedDuration === "/4") dur = "3/8";
+            
+            isDottedMode = false;
+            if (dotBtn) dotBtn.classList.remove('active');
+        } else if (selectedDuration === "1") {
+            dur = ""; // ABC-standardissa 1 on tyhjä
+        }
+
+        // 3. TEKSTIN LISÄÄMINEN
+        const noteString = selectedAccidental + note + dur + " ";
+        const start = abcEditor.selectionStart;
+        const end = abcEditor.selectionEnd;
         
-        // SOITA ÄÄNI TÄSSÄ
-        playNoteFeedback(pitch);
-            let dur = selectedDuration;
-            
-            if (isDottedMode && note !== 'z') {
-                if (selectedDuration === "1") dur = "3/2";
-                else if (selectedDuration === "2") dur = "3";
-                else if (selectedDuration === "/2") dur = "3/4";
-                else if (selectedDuration === "/4") dur = "3/8";
-                
-                isDottedMode = false;
-                if (dotBtn) dotBtn.classList.remove('active');
-            } else if (selectedDuration === "1") {
-                dur = "";
-            }
+        abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
+        abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+        
+        // 4. ETUMERKKIEN NOLLAUS
+        selectedAccidental = "";
+        document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
+        
+        abcEditor.focus();
 
-            const noteString = selectedAccidental + note + dur + " ";
-            const start = abcEditor.selectionStart;
-            const end = abcEditor.selectionEnd;
-            
-            // Lisätään teksti
-            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
-            abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
-            
-            // Nollataan etumerkit
-            selectedAccidental = "";
-            document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
-            
-            abcEditor.focus();
-
-            // PÄIVITYS: Piirretään viivasto heti napin painalluksen jälkeen
-            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
-                responsive: 'resize', 
-                scale: 0.7 
-            });
-        });
-    });
-
-    // 6. Hae-nappi
-    const searchBtn = document.getElementById('search-btn');
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            handleSearch();
+        // 5. PÄIVITYS
+        // Kutsumalla handleSearch() hoituu sekä nuottikuva että hakutulokset
+        handleSearch();
         });
     }
 
