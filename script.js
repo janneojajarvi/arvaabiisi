@@ -249,6 +249,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Määritellään editori heti alussa, jotta kaikki funktiot löytävät sen
     const abcEditor = document.getElementById('searchQuery');
 
+    // Alustetaan synthControl kerran globaalisti
+if (ABCJS.synth.supportsAudio()) {
+    synthControl = new ABCJS.synth.SynthController();
+    synthControl.load("#audio-controls", null, {
+        displayRestart: true,
+        displayPlay: true,
+        displayProgress: true,
+        displayWarp: true
+    });
+}
+
     // 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
     abcEditor.addEventListener('input', () => {
         const input = abcEditor.value;
