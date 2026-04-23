@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arvaabiisi-v5'; // Päivitä aina versio, kun muutat ASSETS-listaa
+const CACHE_NAME = 'arvaabiisi-v6'; // Päivitä aina versio, kun muutat ASSETS-listaa
 
 const ASSETS = [
   './',
