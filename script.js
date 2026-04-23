@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
             
             abcEditor.focus();
-            handleSearch();
+         
         });
     });
 
