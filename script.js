@@ -6,7 +6,7 @@ const urls = [
     "sessionSet09.js", "sessionSet10.js", "sessionSet11.js", "sessionSet12.js",
     "sessionSet13.js", "sessionSet14.js", "sessionSet15.js", "sessionSet16.js",
     "sessionSet17.js", "sessionSet18.js", "folkwikiSet1.js", "folkwikiSet2.js",
-    "folkwikiSet3.js", "fsfolkdiktning01.js", "esavelmat_kansantanssit.js", "esavelmat_kjs.js", "suomitest3.js", "fsfolkdiktning02.js", "extrasetti5.js"
+    "folkwikiSet3.js", "fsfolkdiktning01.js", "esavelmat_kansantanssit.js", "esavelmat_kjs.js", "esavelmat_rs1.js", "esavelmat_rs2.js", "suomitest3.js", "fsfolkdiktning02.js", "extrasetti5.js"
 ];
 
 let selectedDuration = "1";
