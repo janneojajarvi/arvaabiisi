@@ -9,7 +9,8 @@ const urls = [
     "folkwikiSet3.js", "fsfolkdiktning01.js", "esavelmat_kansantanssit.js", 
     "esavelmat_kjs.js", "esavelmat_rs1.js", "esavelmat_rs2.js", 
     "esavelmat_ls1.js", "esavelmat_ls2.js", "esavelmat_ls3.js", "esavelmat_ls4.js",
-    "suomitest3.js", "fsfolkdiktning02.js", "FinnishTunes.js", "FinnishTunes2.js", "swedish2.js", "extrasetti5.js"
+    "suomitest3.js", "fsfolkdiktning02.js", "FinnishTunes.js", "FinnishTunes2.js", 
+    "swedish2.js", "norway1.js", "extrasetti5.js"
 ];
 
 let selectedDuration = "1";
