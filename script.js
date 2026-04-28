@@ -215,35 +215,55 @@ function handleSearch() {
     let displayName = tune.name;
 
     if (tune.name.includes("VIA")) {
-        const abc = tune.abc;
-        let metaParts = [];
+    const abc = tune.abc;
+    let metaParts = [];
 
-        // 1. Etsitään R: (Rytmi)
-        const rIndex = abc.indexOf("\nR:");
-        if (rIndex !== -1) {
-            let rPart = abc.substring(rIndex + 3).split(/[\\n\n]/)[0].trim();
-            rPart = rPart.replace(/[\\"]/g, "").trim();
-            if (rPart && rPart !== "-") metaParts.push(rPart);
+    // Apufunktio kentän poimimiseen suoraan tekstistä
+    function getAbcField(fieldTag) {
+        // Etsitään esim. "\nS:"
+        const tag = "\n" + fieldTag + ":";
+        const startIdx = abc.indexOf(tag);
+        if (startIdx === -1) return null;
+
+        // Aloitetaan lukeminen tunnisteen jälkeen
+        let contentStart = startIdx + tag.length;
+        
+        // Etsitään seuraava rivinvaihto (joko oikea \n tai tekstinä kirjoitettu \n)
+        // Käytetään substringia ja etsitään loppukohta
+        let remaining = abc.substring(contentStart);
+        
+        // Etsitään ensimmäinen esiintymä joko oikealle rivinvaihdolle tai \n-tekstille
+        let endIdx = remaining.indexOf("\n");
+        let altEndIdx = remaining.indexOf("\\n");
+        
+        let finalEnd;
+        if (endIdx !== -1 && altEndIdx !== -1) {
+            finalEnd = Math.min(endIdx, altEndIdx);
+        } else {
+            finalEnd = (endIdx !== -1) ? endIdx : altEndIdx;
         }
 
-        // 2. Etsitään S: (Lähde)
-        const sIndex = abc.indexOf("\nS:");
-        if (sIndex !== -1) {
-            let sPart = abc.substring(sIndex + 3).split(/[\\n\n]/)[0].trim();
-            sPart = sPart.replace(/[\\"]/g, "").trim();
-            if (sPart && sPart !== "-") metaParts.push(sPart);
-        }
+        let result = (finalEnd !== -1) ? remaining.substring(0, finalEnd) : remaining;
+        
+        // Siivotaan turhat merkit
+        return result.replace(/[\\"]/g, "").trim();
+    }
 
-        // Yhdistetään löydetyt osat pilkulla
-        if (metaParts.length > 0) {
-            let combinedMeta = metaParts.join(", ");
-            
-            // Rajoitetaan pituutta, jottei se riko käyttöliittymää mobiilissa
-            if (combinedMeta.length > 60) {
-                combinedMeta = combinedMeta.substring(0, 57) + "...";
-            }
-            
-            displayName += ` <span class="meta-info">(${combinedMeta})</span>`;
+    // Poimitaan R ja S
+    const rVal = getAbcField("R");
+    const sVal = getAbcField("S");
+
+    if (rVal && rVal !== "-") metaParts.push(rVal);
+    if (sVal && sVal !== "-") metaParts.push(sVal);
+
+    if (metaParts.length > 0) {
+        let combinedMeta = metaParts.join(", ");
+        
+        if (combinedMeta.length > 65) {
+            combinedMeta = combinedMeta.substring(0, 62) + "...";
+        }
+        
+        displayName += ` <span class="meta-info">(${combinedMeta})</span>`;
         }
     }
 
