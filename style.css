@@ -273,3 +273,55 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     min-width: 44px;
     min-height: 44px;
 }
+
+/* 1. PAKOTETAAN ELEMENTIT NÄKYVIIN MOBIILISSA */
+.abcjs-video-controls, 
+.abcjs-midi-controls, 
+.abcjs-audio {
+    display: flex !important; /* Pakottaa näkyviin */
+    flex-wrap: wrap !important; /* Sallii rivittymisen jos liian leveä */
+    justify-content: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* 2. TEMPO JA WARP-NAPIT */
+/* Etsitään tempo- ja säätöelementit ja varmistetaan niiden koko */
+.abcjs-tempo-wrapper, 
+.abcjs-midi-tempo,
+.abcjs-video-tempo {
+    display: flex !important;
+    align-items: center !important;
+    order: 10; /* Siirtää tempon viimeiseksi tai omalle rivilleen mobiilissa */
+}
+
+/* 3. TEHDÄÄN NAPEISTA PAINETTAVIA */
+/* ABCJS käyttää usein svg-kuvakkeita, varmistetaan että napit ovat fyysisesti olemassa */
+.abcjs-btn {
+    min-width: 48px !important; /* Applen/Googlen suositus minimikooksi */
+    min-height: 48px !important;
+    margin: 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 4. ESTETÄÄN SOITINTA KATOAMASTA REUNAN YLI */
+#audio-controls {
+    overflow: visible !important;
+    min-height: 80px; /* Varmistetaan että tilaa riittää kahdelle riville */
+}
+
+/* 5. TYPOGRAFIA MOBIILISSA */
+@media (max-width: 600px) {
+    .abcjs-midi-progress-background {
+        width: 100% !important; /* Edistymispalkki vie koko leveyden */
+        order: -1; /* Nostaa palkin ylimmäksi mobiilissa */
+        margin-bottom: 10px;
+    }
+    
+    .abcjs-audio {
+        padding: 10px 5px !important;
+    }
+}
