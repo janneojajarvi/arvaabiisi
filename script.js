@@ -383,6 +383,24 @@ if (ABCJS.synth.supportsAudio()) {
     });
 }
 
+    const tempoRange = document.getElementById('tempoRange');
+const tempoDisplay = document.getElementById('tempoDisplay');
+
+tempoRange.oninput = () => {
+    const newBpm = tempoRange.value;
+    tempoDisplay.innerText = newBpm;
+    
+    // Jos soitin on olemassa, päivitetään tempo lennosta
+    if (synthControl) {
+        // ABCJS setTune ottaa vastaan BPM-arvon kolmantena parametrina
+        // Huom: visualObj täytyy olla globaalisti saatavilla
+        const currentBpm = parseInt(document.getElementById('tempoRange').value);
+
+synthControl.setTune(visualObj, false, { bpm: currentBpm })
+    .then(function() {
+        console.log("Kappale ladattu tempolla: " + currentBpm);
+    });
+
     // 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
     abcEditor.addEventListener('input', () => {
         const input = abcEditor.value;
