@@ -216,23 +216,27 @@ function handleSearch() {
 
     // Tarkistetaan alkaako nimi VIA (tai onko se jokin muu VIA-alkuinen muunnelma)
     if (tune.name.includes("VIA")) {
-    // MUUTETTU REGEX: 
-    // [^\\n"] poimii kaiken mikä EI ole rivinvaihto tai lainausmerkki.
-    // Tämä sallii välilyönnit ja erikoismerkit nimen sisällä.
-    const sMatch = tune.abc.match(/S:\s*([^\\n"]+)/);
+    // Etsitään kohta, joka alkaa "S:"
+    const abcString = tune.abc;
+    const sIndex = abcString.indexOf("\nS:");
     
-    if (sMatch && sMatch[1]) {
-        let sContent = sMatch[1].trim();
+    if (sIndex !== -1) {
+        // Otetaan teksti S: merkin jälkeen
+        let sPart = abcString.substring(sIndex + 3); 
         
-        // Poistetaan mahdolliset tekstimuotoiset \n merkit, jos niitä jäi
-        sContent = sContent.replace(/\\n/g, "").trim();
-
-        // Asetetaan maksimipituus (esim. 50 merkkiä), jotta mahtuu kännykän ruudulle
-        const maxPituus = 50;
-        if (sContent.length > maxPituus) {
-            sContent = sContent.substring(0, maxPituus) + "...";
+        // Etsitään missä kohtaa seuraava rivi alkaa (eli missä teksti loppuu)
+        // Etsitään joko \n tai koodissa näkyvää \\n merkintää
+        let endOfLine = sPart.search(/\\n|\n/);
+        
+        if (endOfLine !== -1) {
+            sPart = sPart.substring(0, endOfLine);
         }
         
+        let sContent = sPart.trim();
+
+        // Poistetaan mahdolliset ylimääräiset kenoviivat tai lainausmerkit
+        sContent = sContent.replace(/[\\"]/g, "").trim();
+
         if (sContent.length > 0) {
             displayName += ` <span class="meta-info">(${sContent})</span>`;
             }
