@@ -316,7 +316,8 @@ function handleSearch() {
                 });
                 
                 // 4. Kytketään uusi biisi
-                return synthControl.setTune(visualObj, false, { bpm: 100 });
+                return synthControl.setTune(visualObj, false, { bpm: 100, 
+    warp: true });
             })
             .then(function() {
                 console.log("Kappale päivitetty: " + tune.name);
