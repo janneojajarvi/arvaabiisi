@@ -81,11 +81,7 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     background: #fff3cd;
 }
 
-.button-group {
-    display: flex;
-    gap: 5px;
-    flex: 1;
-}
+
 
 .acc-btn {
     flex: 1;
@@ -131,17 +127,22 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
 
 .button-group {
     display: flex;      /* Asettaa elementit vierekkäin */
-    gap: 10px;          /* Jättää pienen raon nappien välille */
+  flex-wrap: wrap;    /* TÄMÄ ON TÄRKEÄ: sallii nappien siirtyä uudelle riville */
+    gap: 8px;          /* Jättää pienen raon nappien välille */
     margin-top: 15px;   /* Lisää hieman tilaa tekstikentän ja nappien välille */
     width: 100%;        /* Varmistaa, että ryhmä vie koko leveyden */
 }
 
+
+
 .button-group button {
-    flex: 1;            /* Tekee napeista samanlevuiset */
-    padding: 12px;      /* Tekee napeista helpommin painettavat mobiilissa */
+    flex: 1 1 calc(20% - 10px); /* TÄMÄ: yrittää laittaa n. 5 nappia per rivi, mutta joustaa */
+    min-width: 50px;           /* Estää nappeja menemästä liian pieniksi */
+    padding: 12px 5px;
     cursor: pointer;
     border-radius: 5px;
     border: 1px solid #ccc;
+    font-size: 16px;           /* Hyvä koko sormella painamiseen */
 }
 
 /* Voit tyylitellä haku-napin erottumaan */
