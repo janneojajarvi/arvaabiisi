@@ -122,11 +122,10 @@
     <button id="stop-btn">Pysäytä</button>
     <div id="audio-status" style="display: inline-block; margin-left: 10px; font-size: 0.8em;"></div>
 </div>
-        <div class="custom-tempo-controls">
-        <button onclick="changeTempo(0.9)">Slower</button>
-        <span id="current-tempo-display">Tempo: 100%</span>
-        <button onclick="changeTempo(1.1)">Faster</button>
-    </div>
+        <div class="tempo-container">
+    <label for="tempoRange">Tempo: <span id="tempoDisplay">100</span> BPM</label>
+    <input type="range" id="tempoRange" min="30" max="240" value="100">
+</div>
         </div>
 <div id="paper"></div>
   <div id="full-note-display">
