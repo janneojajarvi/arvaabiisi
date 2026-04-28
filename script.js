@@ -114,18 +114,22 @@ function getFingerprint(abc) {
     return "|" + fp.join("|") + "|";
 }
 
-function toggleEdit() {
-    const input = document.getElementById('abc-input');
-    const btn = document.getElementById('edit-toggle');
+function toggleManualEdit() {
+    const textarea = document.getElementById('searchQuery');
+    const btn = document.getElementById('manual-edit-btn');
     
-    if (input.readOnly) {
-        input.readOnly = false;
-        input.setAttribute('inputmode', 'text'); // Sallii näppäimistön
-        input.focus();
-        btn.innerText = "✅"; // Muutetaan nappi "valmis"-ikoniksi
+    if (textarea.readOnly) {
+        // Sallitaan vapaa kirjoitus
+        textarea.readOnly = false;
+        textarea.setAttribute('inputmode', 'text');
+        textarea.style.backgroundColor = "#fffde7"; // Kellertävä tausta muokkaustilassa
+        textarea.focus();
+        btn.innerText = "✅";
     } else {
-        input.readOnly = true;
-        input.setAttribute('inputmode', 'none');
+        // Palataan takaisin nappulasyöttöön
+        textarea.readOnly = true;
+        textarea.setAttribute('inputmode', 'none');
+        textarea.style.backgroundColor = "white";
         btn.innerText = "✏️";
     }
 }
