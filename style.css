@@ -234,3 +234,27 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     margin-left: 5px;
     font-weight: normal;
 }
+
+/* Pakotetaan ABCJS-soittimen kontrollit näkyviin mobiilissa */
+#audio-controls .abcjs-pushed {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Säädetään temponäyttöä ja nappeja suuremmiksi sormella painettaviksi */
+.abcjs-tempo-wrapper {
+    display: flex !important;
+    align-items: center;
+    font-size: 1.2em; /* Suurempi teksti puhelimeen */
+    margin: 5px;
+}
+
+/* Jos soitin on silti liian leveä, sallitaan sen sisäosien rivitys */
+.abcjs-midi-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
