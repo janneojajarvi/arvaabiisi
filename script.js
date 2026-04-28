@@ -391,17 +391,20 @@ tempoRange.oninput = () => {
     tempoDisplay.innerText = newBpm;
     
     // Jos soitin on olemassa, päivitetään tempo lennosta
-    if (synthControl) {
-        // ABCJS setTune ottaa vastaan BPM-arvon kolmantena parametrina
-        // Huom: visualObj täytyy olla globaalisti saatavilla
-        const currentBpm = parseInt(document.getElementById('tempoRange').value);
+if (synthControl) {
+    // ABCJS setTune ottaa vastaan BPM-arvon kolmantena parametrina
+    // Huom: visualObj täytyy olla globaalisti saatavilla
+    const currentBpm = parseInt(document.getElementById('tempoRange').value);
 
-synthControl.setTune(visualObj, false, { bpm: currentBpm })
-    .then(function() {
-        console.log("Kappale ladattu tempolla: " + currentBpm);
-    });
-}
-    // 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
+    synthControl.setTune(visualObj, false, { bpm: currentBpm })
+        .then(function() {
+            console.log("Kappale ladattu tempolla: " + currentBpm);
+        });
+} // <--- TÄMÄ sulku puuttui sinulta!
+
+// 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
+// Varmista, että abcEditor on määritelty aiemmin (esim. const abcEditor = document.getElementById('searchQuery');)
+if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
     abcEditor.addEventListener('input', () => {
         const input = abcEditor.value;
         ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { 
@@ -409,6 +412,7 @@ synthControl.setTune(visualObj, false, { bpm: currentBpm })
             scale: 0.7 
         });
     });
+}
 
     // 2. Kesto-napit
     document.querySelectorAll('.dur-btn').forEach(btn => {
