@@ -213,58 +213,65 @@ function handleSearch() {
     div.className = 'tune-card';
 
     let displayName = tune.name;
-
-    if (tune.name.includes("VIA")) {
     const abc = tune.abc;
-    let metaParts = [];
 
-    // Apufunktio kentän poimimiseen suoraan tekstistä
+    // Apufunktio kentän poimimiseen (varmempi versio)
     function getAbcField(fieldTag) {
-        // Etsitään esim. "\nS:"
         const tag = "\n" + fieldTag + ":";
         const startIdx = abc.indexOf(tag);
         if (startIdx === -1) return null;
 
-        // Aloitetaan lukeminen tunnisteen jälkeen
         let contentStart = startIdx + tag.length;
-        
-        // Etsitään seuraava rivinvaihto (joko oikea \n tai tekstinä kirjoitettu \n)
-        // Käytetään substringia ja etsitään loppukohta
         let remaining = abc.substring(contentStart);
         
-        // Etsitään ensimmäinen esiintymä joko oikealle rivinvaihdolle tai \n-tekstille
+        // Etsitään loppukohta (joko oikea rivinvaihto tai \n-teksti)
         let endIdx = remaining.indexOf("\n");
         let altEndIdx = remaining.indexOf("\\n");
-        
         let finalEnd;
-        if (endIdx !== -1 && altEndIdx !== -1) {
-            finalEnd = Math.min(endIdx, altEndIdx);
-        } else {
-            finalEnd = (endIdx !== -1) ? endIdx : altEndIdx;
-        }
+        
+        if (endIdx !== -1 && altEndIdx !== -1) finalEnd = Math.min(endIdx, altEndIdx);
+        else finalEnd = (endIdx !== -1) ? endIdx : altEndIdx;
 
         let result = (finalEnd !== -1) ? remaining.substring(0, finalEnd) : remaining;
-        
-        // Siivotaan turhat merkit
         return result.replace(/[\\"]/g, "").trim();
     }
 
-    // Poimitaan R ja S
-    const rVal = getAbcField("R");
-    const sVal = getAbcField("S");
+    let metaParts = [];
+    const nameUpper = tune.name.toUpperCase();
 
-    if (rVal && rVal !== "-") metaParts.push(rVal);
-    if (sVal && sVal !== "-") metaParts.push(sVal);
+    // SÄÄNTÖ 1: VIA-alkuiset (aiempi sääntö)
+    if (nameUpper.startsWith("VIA")) {
+        const rVal = getAbcField("R");
+        const sVal = getAbcField("S");
+        if (rVal && rVal !== "-") metaParts.push(rVal);
+        if (sVal && sVal !== "-") metaParts.push(sVal);
+    } 
+    // SÄÄNTÖ 2: kt1, rs1, rs2 -> M: ja O:
+    else if (nameUpper.startsWith("KT1") || nameUpper.startsWith("RS1") || nameUpper.startsWith("RS2")) {
+        const mVal = getAbcField("M");
+        const oVal = getAbcField("O");
+        if (mVal && mVal !== "-") metaParts.push(mVal);
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
+    // SÄÄNTÖ 3: hs1 -> N: ja O:
+    else if (nameUpper.startsWith("HS1")) {
+        const nVal = getAbcField("N");
+        const oVal = getAbcField("O");
+        if (nVal && nVal !== "-") metaParts.push(nVal);
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
+    // SÄÄNTÖ 4: ls1, ls2, ls3, ls4 -> "laulusävelmä" ja O:
+    else if (/^LS[1-4]/.test(nameUpper)) {
+        metaParts.push("laulusävelmä");
+        const oVal = getAbcField("O");
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
 
+    // Yhdistetään ja lisätään nimen perään
     if (metaParts.length > 0) {
         let combinedMeta = metaParts.join(", ");
-        
-        if (combinedMeta.length > 65) {
-            combinedMeta = combinedMeta.substring(0, 62) + "...";
-        }
-        
+        if (combinedMeta.length > 70) combinedMeta = combinedMeta.substring(0, 67) + "...";
         displayName += ` <span class="meta-info">(${combinedMeta})</span>`;
-        }
     }
 
     div.innerHTML = `<h3>${displayName}</h3>`;
