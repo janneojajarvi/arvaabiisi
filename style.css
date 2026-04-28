@@ -226,3 +226,11 @@ code { background: #fff; padding: 2px 4px; border-radius: 3px; font-weight: bold
     font-weight: bold;
     color: #666;
 }
+
+.meta-info {
+    font-size: 0.8em;
+    color: #666;
+    font-style: italic;
+    margin-left: 5px;
+    font-weight: normal;
+}
