@@ -18,6 +18,7 @@ let selectedAccidental = "";
 let isDottedMode = false;
 let synthControl;
 let currentAbc;
+let visualObj; // Lisää tämä globaaliksi, jotta temposäädin löytää sen
 
 let currentWarp = 1.0;
 
@@ -307,20 +308,22 @@ function handleSearch() {
     div.onclick = function() {
     currentAbc = tune.abc;
     
-    // 1. Pysäytetään vanha soitto ja tuhotaan vanha ohjain muistista
     if (synthControl) {
         synthControl.pause();
-        synthControl = null; // Pakotetaan ohjain nollaksi
+        // Emme nollaa tässä synthControlia, jotta temposäädin pysyy kytkettynä
     }
     
-    // Tyhjennetään soittimen alue fyysisesti
     const audioContainer = document.getElementById('audio-controls');
     audioContainer.innerHTML = "";
     audioContainer.style.display = 'block';
 
-    // 2. Piirretään nuotit (Q:100 tempo)
     const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
-    const visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize' })[0];
+    
+    // POISTA 'const' tästä alta, jotta se tallentuu globaaliin visualObj-muuttujaan
+    visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
+        responsive: 'resize',
+        paddingbottom: 30 // Tärkeä tila huuliharpputablatureille [cite: 2026-03-22]
+    })[0];
     
     if (ABCJS.synth.supportsAudio()) {
         const synth = new ABCJS.synth.CreateSynth();
@@ -329,28 +332,26 @@ function handleSearch() {
             visualObj: visualObj,
             audioContext: new (window.AudioContext || window.webkitAudioContext)() 
         })
-            .then(function() {
-                // 3. Luodaan ohjain täysin alusta puhtaaseen elementtiin
+        .then(function() {
+            // Käytetään globaalia synthControlia
+            if (!synthControl) {
                 synthControl = new ABCJS.synth.SynthController();
-                synthControl.load("#audio-controls", null, {
-                    displayRestart: true,
-                    displayPlay: true,
-                    displayProgress: true,
-                    displayWarp: true,
-                    responsive: "resize", // Lisää tämä, jos kirjastoversiosi tukee sitä
-                    width: "100%"
-                });
-                
-                // 4. Kytketään uusi biisi
-                return synthControl.setTune(visualObj, false, { bpm: 100, 
-    warp: true });
-            })
-            .then(function() {
-                console.log("Kappale päivitetty: " + tune.name);
-            })
-            .catch(function(error) {
-                console.warn("Audio-ongelma:", error);
+            }
+            
+            synthControl.load("#audio-controls", null, {
+                displayRestart: true,
+                displayPlay: true,
+                displayProgress: true,
+                displayWarp: true
             });
+            
+            // Haetaan nykyinen tempo liukusäätimestä
+            const currentBpm = parseInt(document.getElementById('tempoRange').value) || 100;
+            return synthControl.setTune(visualObj, false, { bpm: currentBpm });
+        })
+        .catch(function(error) {
+            console.warn("Audio-ongelma:", error);
+        });
     }
     
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
