@@ -214,32 +214,36 @@ function handleSearch() {
 
     let displayName = tune.name;
 
-    // Tarkistetaan alkaako nimi VIA (tai onko se jokin muu VIA-alkuinen muunnelma)
     if (tune.name.includes("VIA")) {
-    // Etsitään kohta, joka alkaa "S:"
-    const abcString = tune.abc;
-    const sIndex = abcString.indexOf("\nS:");
-    
-    if (sIndex !== -1) {
-        // Otetaan teksti S: merkin jälkeen
-        let sPart = abcString.substring(sIndex + 3); 
-        
-        // Etsitään missä kohtaa seuraava rivi alkaa (eli missä teksti loppuu)
-        // Etsitään joko \n tai koodissa näkyvää \\n merkintää
-        let endOfLine = sPart.search(/\\n|\n/);
-        
-        if (endOfLine !== -1) {
-            sPart = sPart.substring(0, endOfLine);
+        const abc = tune.abc;
+        let metaParts = [];
+
+        // 1. Etsitään R: (Rytmi)
+        const rIndex = abc.indexOf("\nR:");
+        if (rIndex !== -1) {
+            let rPart = abc.substring(rIndex + 3).split(/[\\n\n]/)[0].trim();
+            rPart = rPart.replace(/[\\"]/g, "").trim();
+            if (rPart && rPart !== "-") metaParts.push(rPart);
         }
-        
-        let sContent = sPart.trim();
 
-        // Poistetaan mahdolliset ylimääräiset kenoviivat tai lainausmerkit
-        sContent = sContent.replace(/[\\"]/g, "").trim();
+        // 2. Etsitään S: (Lähde)
+        const sIndex = abc.indexOf("\nS:");
+        if (sIndex !== -1) {
+            let sPart = abc.substring(sIndex + 3).split(/[\\n\n]/)[0].trim();
+            sPart = sPart.replace(/[\\"]/g, "").trim();
+            if (sPart && sPart !== "-") metaParts.push(sPart);
+        }
 
-        if (sContent.length > 0) {
-            displayName += ` <span class="meta-info">(${sContent})</span>`;
+        // Yhdistetään löydetyt osat pilkulla
+        if (metaParts.length > 0) {
+            let combinedMeta = metaParts.join(", ");
+            
+            // Rajoitetaan pituutta, jottei se riko käyttöliittymää mobiilissa
+            if (combinedMeta.length > 60) {
+                combinedMeta = combinedMeta.substring(0, 57) + "...";
             }
+            
+            displayName += ` <span class="meta-info">(${combinedMeta})</span>`;
         }
     }
 
