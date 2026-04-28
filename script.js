@@ -223,6 +223,13 @@ function handleSearch() {
         
         if (sMatch && sMatch[1]) {
             let sContent = sMatch[1].trim();
+
+            // --- TÄSSÄ ON RAJOITUS ---
+    const maxPituus = 30; // Muuta tästä haluamasi merkkimäärä
+    if (sContent.length > maxPituus) {
+        sContent = sContent.substring(0, maxPituus) + "...";
+    }
+    // -------------------------
             
             // Siivotaan vielä varmuuden vuoksi pois mahdolliset koodin rippeet
             sContent = sContent.replace(/\\n/g, '').trim();
