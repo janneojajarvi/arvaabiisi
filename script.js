@@ -171,6 +171,13 @@ async function initApp() {
 }
 
 function handleSearch() {
+
+    if (ABCJS.synth.supportsAudio()) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }
     const abcEditor = document.getElementById('searchQuery');
     const input = abcEditor.value;
     const searchBtn = document.getElementById('search-btn');
