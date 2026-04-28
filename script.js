@@ -367,55 +367,40 @@ function handleSearch() {
 
 // --- TAPAHTUMAT ---
 
+let visualObj; // Globaali muuttuja temposäädintä varten
+
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     
-    // Määritellään editori heti alussa, jotta kaikki funktiot löytävät sen
     const abcEditor = document.getElementById('searchQuery');
-
-    // Alustetaan synthControl kerran globaalisti
-if (ABCJS.synth.supportsAudio()) {
-    synthControl = new ABCJS.synth.SynthController();
-    synthControl.load("#audio-controls", null, {
-        displayRestart: true,
-        displayPlay: true,
-        displayProgress: true,
-        displayWarp: true
-    });
-}
-
     const tempoRange = document.getElementById('tempoRange');
-const tempoDisplay = document.getElementById('tempoDisplay');
+    const tempoDisplay = document.getElementById('tempoDisplay');
 
-tempoRange.oninput = () => {
-    const newBpm = tempoRange.value;
-    tempoDisplay.innerText = newBpm;
-    
-    // Jos soitin on olemassa, päivitetään tempo lennosta
-if (synthControl) {
-    // ABCJS setTune ottaa vastaan BPM-arvon kolmantena parametrina
-    // Huom: visualObj täytyy olla globaalisti saatavilla
-    const currentBpm = parseInt(document.getElementById('tempoRange').value);
+    // 1. Temposäätimen logiikka
+    if (tempoRange) {
+        tempoRange.oninput = () => {
+            const newBpm = tempoRange.value;
+            if (tempoDisplay) tempoDisplay.innerText = newBpm;
+            
+            if (synthControl && visualObj) {
+                synthControl.setTune(visualObj, false, { bpm: parseInt(newBpm) })
+                    .then(() => console.log("Tempo päivitetty: " + newBpm))
+                    .catch(err => console.warn("Tempon päivitysvirhe:", err));
+            }
+        };
+    }
 
-    synthControl.setTune(visualObj, false, { bpm: currentBpm })
-        .then(function() {
-            console.log("Kappale ladattu tempolla: " + currentBpm);
+    // 2. Esikatselun päivitys
+    if (abcEditor) {
+        abcEditor.addEventListener('input', () => {
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
         });
-} // <--- TÄMÄ sulku puuttui sinulta!
+    }
 
-// 1. Päivitetään esikatselu, kun tekstiä kirjoitetaan käsin
-// Varmista, että abcEditor on määritelty aiemmin (esim. const abcEditor = document.getElementById('searchQuery');)
-if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
-    abcEditor.addEventListener('input', () => {
-        const input = abcEditor.value;
-        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + input, { 
-            responsive: 'resize', 
-            scale: 0.7 
-        });
-    });
-}
-
-    // 2. Kesto-napit
+    // 3. Kesto-napit
     document.querySelectorAll('.dur-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -424,7 +409,7 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
         });
     });
 
-    // 3. Piste-nappi
+    // 4. Piste-nappi
     const dotBtn = document.getElementById('dot-btn');
     if (dotBtn) {
         dotBtn.addEventListener('click', (e) => {
@@ -433,7 +418,7 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
         });
     }
 
-    // 4. Etumerkki-napit
+    // 5. Etumerkki-napit
     document.querySelectorAll('.acc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             selectedAccidental = btn.classList.contains('active') ? "" : btn.getAttribute('data-acc');
@@ -442,7 +427,7 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
         });
     });
 
-    // 5. Nuotti-napit (TÄMÄ PÄIVITTÄÄ NYT MYÖS VIIVASTON)
+    // 6. Nuotti-napit
     document.querySelectorAll('.note-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
@@ -453,7 +438,6 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
                 else if (selectedDuration === "2") dur = "3";
                 else if (selectedDuration === "/2") dur = "3/4";
                 else if (selectedDuration === "/4") dur = "3/8";
-                
                 isDottedMode = false;
                 if (dotBtn) dotBtn.classList.remove('active');
             } else if (selectedDuration === "1") {
@@ -464,17 +448,13 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
             const start = abcEditor.selectionStart;
             const end = abcEditor.selectionEnd;
             
-            // Lisätään teksti
             abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
             
-            // Nollataan etumerkit
             selectedAccidental = "";
             document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
-            
             abcEditor.focus();
 
-            // PÄIVITYS: Piirretään viivasto heti napin painalluksen jälkeen
             ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
                 responsive: 'resize', 
                 scale: 0.7 
@@ -482,7 +462,7 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
         });
     });
 
-    // 6. Hae-nappi
+    // 7. Hae-nappi
     const searchBtn = document.getElementById('search-btn');
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
@@ -490,44 +470,31 @@ if (typeof abcEditor !== 'undefined' && abcEditor !== null) {
         });
     }
 
-// Etsi backspace-painike
-const backspaceBtn = document.getElementById('backspace-btn');
+    // 8. Backspace-painike
+    const backspaceBtn = document.getElementById('backspace-btn');
+    if (backspaceBtn) {
+        backspaceBtn.addEventListener('click', () => {
+            const start = abcEditor.selectionStart;
+            const end = abcEditor.selectionEnd;
+            const value = abcEditor.value;
 
-if (backspaceBtn) {
-    backspaceBtn.addEventListener('click', () => {
-        const start = abcEditor.selectionStart;
-        const end = abcEditor.selectionEnd;
-        const value = abcEditor.value;
-
-        if (start === end && start > 0) {
-            // Jos tekstiä ei ole maalattu, poistetaan yksi merkki kursorin vasemmalta puolelta
-            // Huom: Poistetaan myös mahdollinen välilyönti nuotin perästä
-            let deleteCount = 1;
-            if (value[start - 1] === ' ') {
-                // Jos edellinen merkki on välilyönti, katsotaan onko sen edellä vielä nuotti
+            if (start === end && start > 0) {
                 abcEditor.value = value.slice(0, start - 1) + value.slice(end);
                 abcEditor.selectionStart = abcEditor.selectionEnd = start - 1;
-            } else {
-                abcEditor.value = value.slice(0, start - 1) + value.slice(end);
-                abcEditor.selectionStart = abcEditor.selectionEnd = start - 1;
+            } else if (start !== end) {
+                abcEditor.value = value.slice(0, start) + value.slice(end);
+                abcEditor.selectionStart = abcEditor.selectionEnd = start;
             }
-        } else if (start !== end) {
-            // Jos tekstiä on maalattu, poistetaan valittu alue
-            abcEditor.value = value.slice(0, start) + value.slice(end);
-            abcEditor.selectionStart = abcEditor.selectionEnd = start;
-        }
 
-        // Muistetaan päivittää nuottiviivasto poiston jälkeen!
-        ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
-            responsive: 'resize', 
-            scale: 0.7 
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
+            abcEditor.focus();
         });
-
-        abcEditor.focus();
-    });
-}
+    }
     
-    // 7. Tyhjennys
+    // 9. Tyhjennys
     const clearBtn = document.getElementById('clearSearch');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
@@ -537,4 +504,4 @@ if (backspaceBtn) {
             ABCJS.renderAbc("search-preview", ""); 
         });
     }
-});
+}); // Tämä sulkee DOMContentLoaded-funktion oikein
