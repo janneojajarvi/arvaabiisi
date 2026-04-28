@@ -312,7 +312,8 @@ function handleSearch() {
                     displayPlay: true,
                     displayProgress: true,
                     displayWarp: true,
-                    responsive: "resize" // Lisää tämä, jos kirjastoversiosi tukee sitä
+                    responsive: "resize", // Lisää tämä, jos kirjastoversiosi tukee sitä
+                    width: "100%"
                 });
                 
                 // 4. Kytketään uusi biisi
