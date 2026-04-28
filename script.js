@@ -209,10 +209,28 @@ function handleSearch() {
         list.innerHTML = "";
 
         matches.slice(0, 50).forEach(tune => {
-            const div = document.createElement('div');
-            div.className = 'tune-card';
-            div.innerHTML = `<h3>${tune.name}</h3>`;
-          div.onclick = function() {
+    const div = document.createElement('div');
+    div.className = 'tune-card';
+
+    // Oletusnimi
+    let displayName = tune.name;
+
+    // Jos nimi alkaa VIA, etsitään S:-kenttä ABC-koodista
+    if (tune.name.startsWith("VIA")) {
+        // Etsitään tekstimuotoinen \nS: ja siitä seuraava teksti seuraavaan \n asti
+        const sMatch = tune.abc.match(/\\nS:\s*([^\\]*)/);
+        if (sMatch && sMatch[1]) {
+            let sContent = sMatch[1].trim();
+            if (sContent) {
+                // Lisätään tyyliteltävä span-elementti nimen perään
+                displayName += ` <span class="meta-info">(${sContent})</span>`;
+            }
+        }
+    }
+
+    div.innerHTML = `<h3>${displayName}</h3>`;
+    
+    div.onclick = function() {
     currentAbc = tune.abc;
     
     // 1. Pysäytetään vanha soitto ja tuhotaan vanha ohjain muistista
