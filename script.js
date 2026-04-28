@@ -114,6 +114,22 @@ function getFingerprint(abc) {
     return "|" + fp.join("|") + "|";
 }
 
+function toggleEdit() {
+    const input = document.getElementById('abc-input');
+    const btn = document.getElementById('edit-toggle');
+    
+    if (input.readOnly) {
+        input.readOnly = false;
+        input.setAttribute('inputmode', 'text'); // Sallii näppäimistön
+        input.focus();
+        btn.innerText = "✅"; // Muutetaan nappi "valmis"-ikoniksi
+    } else {
+        input.readOnly = true;
+        input.setAttribute('inputmode', 'none');
+        btn.innerText = "✏️";
+    }
+}
+
 // --- LATAUS JA HAKU ---
 
 async function initApp() {
