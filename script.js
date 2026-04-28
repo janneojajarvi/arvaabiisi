@@ -212,17 +212,22 @@ function handleSearch() {
     const div = document.createElement('div');
     div.className = 'tune-card';
 
-    // Oletusnimi
     let displayName = tune.name;
 
-    // Jos nimi alkaa VIA, etsitään S:-kenttä ABC-koodista
-    if (tune.name.startsWith("VIA")) {
-        // Etsitään tekstimuotoinen \nS: ja siitä seuraava teksti seuraavaan \n asti
-        const sMatch = tune.abc.match(/\\nS:\s*([^\\]*)/);
+    // Tarkistetaan alkaako nimi VIA (tai onko se jokin muu VIA-alkuinen muunnelma)
+    if (tune.name.includes("VIA")) {
+        // TÄMÄ REGEX ON MUUTETTU:
+        // Etsitään S: merkintää, joka voi alkaa millä tahansa rivinvaihdolla
+        // Nappaa kaiken tekstin kunnes tulee seuraava \n tai lainausmerkki
+        const sMatch = tune.abc.match(/S:\s*([^\\n"]*)/);
+        
         if (sMatch && sMatch[1]) {
             let sContent = sMatch[1].trim();
-            if (sContent) {
-                // Lisätään tyyliteltävä span-elementti nimen perään
+            
+            // Siivotaan vielä varmuuden vuoksi pois mahdolliset koodin rippeet
+            sContent = sContent.replace(/\\n/g, '').trim();
+            
+            if (sContent && sContent.length > 1) {
                 displayName += ` <span class="meta-info">(${sContent})</span>`;
             }
         }
