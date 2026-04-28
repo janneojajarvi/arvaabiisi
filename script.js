@@ -307,10 +307,10 @@ function handleSearch() {
     if (ABCJS.synth.supportsAudio()) {
         const synth = new ABCJS.synth.CreateSynth();
         
-        synth.init({ visualObj: visualObj })
-            .then(function() {
-                return synth.prime();
-            })
+        synth.init({ 
+            visualObj: visualObj,
+            audioContext: new (window.AudioContext || window.webkitAudioContext)() 
+        })
             .then(function() {
                 // 3. Luodaan ohjain täysin alusta puhtaaseen elementtiin
                 synthControl = new ABCJS.synth.SynthController();
