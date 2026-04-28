@@ -19,6 +19,24 @@ let isDottedMode = false;
 let synthControl;
 let currentAbc;
 
+let currentWarp = 1.0;
+
+function changeTempo(modifier) {
+    if (!synthControl) return;
+    
+    currentWarp *= modifier;
+    // Pidetään tempo järkevissä rajoissa
+    if (currentWarp < 0.3) currentWarp = 0.3;
+    if (currentWarp > 2.0) currentWarp = 2.0;
+    
+    // Päivitetään ABCJS-soitin
+    synthControl.setWarp(currentWarp * 100);
+    
+    // Päivitetään tekstinäyttö
+    document.getElementById('current-tempo-display').innerText = 
+        "Tempo: " + Math.round(currentWarp * 100) + "%";
+}
+
 // --- APUFUNKTIOT ---
 
 function getPitchValue(acc, note, oct) {
