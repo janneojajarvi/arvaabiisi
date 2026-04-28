@@ -116,11 +116,18 @@
     <h2>Löydetyt kappaleet (<span id="match-count">0</span>)</h2>
     <div id="results-list"></div>
   </div>
+    <div id="audio-container">
   <div id="audio-controls" style="margin-top: 10px; display: none;">
-    <button id="play-btn">Pelaa</button>
+    <button id="play-btn">Soita</button>
     <button id="stop-btn">Pysäytä</button>
     <div id="audio-status" style="display: inline-block; margin-left: 10px; font-size: 0.8em;"></div>
 </div>
+        <div class="custom-tempo-controls">
+        <button onclick="changeTempo(0.9)">Slower</button>
+        <span id="current-tempo-display">Tempo: 100%</span>
+        <button onclick="changeTempo(1.1)">Faster</button>
+    </div>
+        </div>
 <div id="paper"></div>
   <div id="full-note-display">
     <div id="paper"></div>
