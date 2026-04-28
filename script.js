@@ -39,6 +39,9 @@ function getPitchValue(acc, note, oct) {
 function getFingerprint(abc) {
     if (!abc) return "";
     abc = abc.replace(/[><]/g, " ");
+    // Poistetaan kertausmerkit (:), hakatut sulut ([ ja ]) sekä koristenuottien merkit ({ ja })
+// Tämä varmistaa, että regex lukee vain nuotit ja tahtiviivat
+abc = abc.replace(/[:\[\]{}]/g, "");
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
