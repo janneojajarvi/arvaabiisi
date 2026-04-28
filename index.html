@@ -72,11 +72,18 @@
   </header>
 
   <div class="search-section">
-    <textarea id="searchQuery" placeholder="Esim: C C G G A A G2"></textarea>
-    <div style="display: flex; gap: 5px;">
-    <textarea id="abc-input" readonly inputmode="none"></textarea>
-    <button id="edit-toggle" onclick="toggleEdit()">✏️</button>
-</div>
+    <div style="position: relative;">
+        <textarea id="searchQuery" 
+                  placeholder="Esim: C C G G A A G2" 
+                  inputmode="none" 
+                  readonly></textarea>
+        
+        <button id="manual-edit-btn" 
+                onclick="toggleManualEdit()" 
+                style="position: absolute; right: 5px; top: 5px; background: none; border: none; font-size: 20px; cursor: pointer;">
+            ✏️
+        </button>
+    </div>
     <div class="button-group">
       <button id="search-btn" class="primary-btn" style="margin-top: 10px; padding: 12px 20px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold;">Hae kappaleita</button>
 <button id="clearSearch" style="margin-top: 10px; padding: 12px 20px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold;">🗑️ Tyhjennä</button>
