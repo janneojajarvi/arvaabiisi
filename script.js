@@ -18,7 +18,7 @@ let selectedAccidental = "";
 let isDottedMode = false;
 let synthControl;
 let currentAbc;
-let visualObj; // Lisää tämä globaaliksi, jotta temposäädin löytää sen
+
 
 let currentWarp = 1.0;
 
