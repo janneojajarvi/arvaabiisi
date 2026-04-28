@@ -216,26 +216,25 @@ function handleSearch() {
 
     // Tarkistetaan alkaako nimi VIA (tai onko se jokin muu VIA-alkuinen muunnelma)
     if (tune.name.includes("VIA")) {
-        // TÄMÄ REGEX ON MUUTETTU:
-        // Etsitään S: merkintää, joka voi alkaa millä tahansa rivinvaihdolla
-        // Nappaa kaiken tekstin kunnes tulee seuraava \n tai lainausmerkki
-        const sMatch = tune.abc.match(/S:\s*([^\\n"]*)/);
+    // MUUTETTU REGEX: 
+    // [^\\n"] poimii kaiken mikä EI ole rivinvaihto tai lainausmerkki.
+    // Tämä sallii välilyönnit ja erikoismerkit nimen sisällä.
+    const sMatch = tune.abc.match(/S:\s*([^\\n"]+)/);
+    
+    if (sMatch && sMatch[1]) {
+        let sContent = sMatch[1].trim();
         
-        if (sMatch && sMatch[1]) {
-            let sContent = sMatch[1].trim();
+        // Poistetaan mahdolliset tekstimuotoiset \n merkit, jos niitä jäi
+        sContent = sContent.replace(/\\n/g, "").trim();
 
-            // --- TÄSSÄ ON RAJOITUS ---
-    const maxPituus = 30; // Muuta tästä haluamasi merkkimäärä
-    if (sContent.length > maxPituus) {
-        sContent = sContent.substring(0, maxPituus) + "...";
-    }
-    // -------------------------
-            
-            // Siivotaan vielä varmuuden vuoksi pois mahdolliset koodin rippeet
-            sContent = sContent.replace(/\\n/g, '').trim();
-            
-            if (sContent && sContent.length > 1) {
-                displayName += ` <span class="meta-info">(${sContent})</span>`;
+        // Asetetaan maksimipituus (esim. 50 merkkiä), jotta mahtuu kännykän ruudulle
+        const maxPituus = 50;
+        if (sContent.length > maxPituus) {
+            sContent = sContent.substring(0, maxPituus) + "...";
+        }
+        
+        if (sContent.length > 0) {
+            displayName += ` <span class="meta-info">(${sContent})</span>`;
             }
         }
     }
