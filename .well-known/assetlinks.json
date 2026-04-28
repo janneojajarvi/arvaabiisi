@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.janneojajarvi.arvaabiisi",
+        "sha256_cert_fingerprints": ["55:8A:DA:BE:35:16:5B:3F:08:B9:74:ED:36:A8:57:0E:F7:06:73:58:44:EE:C4:6C:7F:08:23:51:2C:BE:65:D9"]
+      }
+    }]
