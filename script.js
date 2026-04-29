@@ -19,18 +19,25 @@ let isDottedMode = false;
 let synthControl;
 let currentAbc;
 let visualObj; // Globaali muuttuja temposäädintä varten
+
+
 let currentWarp = 1.0;
 
-// --- TEMPOFUNKTIO ---
 function changeTempo(newBpm) {
     if (!synthControl || !visualObj) return;
+
     const bpm = parseInt(newBpm);
+    
+    // Tarkistetaan onko soitto käynnissä
     const wasPlaying = synthControl.status === "playing";
 
+    // setTune päivittää sisäisen rakenteen
     synthControl.setTune(visualObj, false, { bpm: bpm })
         .then(() => {
             console.log("Tempo asetettu: " + bpm);
             if (wasPlaying) {
+                // Jos musiikki soi, pakotetaan se päivittymään 
+                // Tämä on varmin tapa saada ABCJS reagoimaan heti
                 synthControl.play(); 
             }
             if (document.getElementById('tempoDisplay')) {
@@ -41,6 +48,7 @@ function changeTempo(newBpm) {
 }
 
 // --- APUFUNKTIOT ---
+
 function getPitchValue(acc, note, oct) {
     const basePitches = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11 };
     let p = basePitches[note.toUpperCase()];
@@ -58,7 +66,11 @@ function getPitchValue(acc, note, oct) {
 
 function playSingleNote(noteAbc) {
     if (!ABCJS.synth.supportsAudio()) return;
+
+    // Luodaan lyhyt ABC-pätkä yhdelle nuotille
+    // Käytetään oletusasetuksia nopeaan toistoon
     const singleNoteVisual = ABCJS.renderAbc("hidden-paper", "L:1/4\n" + noteAbc, { style: "display:none" })[0];
+    
     const midiContext = new (window.AudioContext || window.webkitAudioContext)();
     const synth = new ABCJS.synth.CreateSynth();
 
@@ -69,6 +81,7 @@ function playSingleNote(noteAbc) {
         return synth.prime();
     }).then(() => {
         synth.start();
+        // Pysäytetään ja suljetaan context lyhyen ajan kuluttua (esim. 500ms)
         setTimeout(() => {
             synth.stop();
             if (midiContext.state !== 'closed') midiContext.close();
@@ -78,13 +91,24 @@ function playSingleNote(noteAbc) {
 
 function getFingerprint(abc) {
     if (!abc) return "";
-    abc = abc.replace(/[><]/g, " ").replace(/[:\[\]{}]/g, "");
+    abc = abc.replace(/[><]/g, " ");
+    // Poistetaan kertausmerkit (:), hakatut sulut ([ ja ]) sekä koristenuottien merkit ({ ja })
+// Tämä varmistaa, että regex lukee vain nuotit ja tahtiviivat
+abc = abc.replace(/[:\[\]{}]/g, "");
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
 
-    const modeOffsets = { 'maj': 0, 'major': 0, 'ion': 0, 'mix': -1, 'lyd': 1, 'dor': -2, 'min': -3, 'm': -3, 'aeo': -3, 'phr': -4, 'loc': -5 };
-    const circleOfFifths = { 'C': 0, 'G': 1, 'D': 2, 'A': 3, 'E': 4, 'B': 5, 'F#': 6, 'C#': 7, 'F': -1, 'Bb': -2, 'Eb': -3, 'Ab': -4, 'Db': -5, 'Gb': -6, 'Cb': -7 };
+    const modeOffsets = {
+        'maj': 0, 'major': 0, 'ion': 0, 'ionian': 0, 'mix': -1, 'mixolydian': -1,
+        'lyd': 1, 'lydian': 1, 'dor': -2, 'dorian': -2, 'min': -3, 'minor': -3, 
+        'm': -3, 'aeo': -3, 'aeolian': -3, 'phr': -4, 'phrygian': -4, 'loc': -5, 'locrian': -5
+    };
+
+    const circleOfFifths = {
+        'C': 0, 'G': 1, 'D': 2, 'A': 3, 'E': 4, 'B': 5, 'F#': 6, 'C#': 7,
+        'F': -1, 'Bb': -2, 'Eb': -3, 'Ab': -4, 'Db': -5, 'Gb': -6, 'Cb': -7
+    };
 
     let sharpCount = (circleOfFifths[root] || 0) + (modeOffsets[mode] || 0);
     const sharpsOrder = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
@@ -99,12 +123,16 @@ function getFingerprint(abc) {
 
     let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "").replace(/\{[^}]*\}/g, "");
     const regex = /([|])|([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
+    
     let notes = [];
     let barAccidentals = {}; 
     let match;
 
     while ((match = regex.exec(clean)) !== null) {
-        if (match[1] === '|') { barAccidentals = {}; continue; }
+        if (match[1] === '|') {
+            barAccidentals = {}; 
+            continue;
+        }
         let acc = match[2];
         const note = match[3];
         const oct = match[4];
@@ -124,7 +152,9 @@ function getFingerprint(abc) {
             if (durStr.includes('/')) {
                 let parts = durStr.split('/');
                 duration = (parseFloat(parts[0]) || 1) / (parseFloat(parts[1]) || 2);
-            } else { duration = parseFloat(durStr); }
+            } else {
+                duration = parseFloat(durStr);
+            }
         }
         notes.push({ pitch, duration });
     }
@@ -133,20 +163,47 @@ function getFingerprint(abc) {
     let fp = [];
     for (let i = 1; i < notes.length; i++) {
         let interval = notes[i].pitch - notes[i-1].pitch;
-        let ratio = Number((notes[i].duration / notes[i-1].duration).toFixed(1));
-        fp.push(`${interval}:${ratio}`);
+        let ratio = notes[i].duration / notes[i-1].duration;
+        let durRatio = Number(ratio.toFixed(1));
+        fp.push(`${interval}:${durRatio}`);
     }
     return "|" + fp.join("|") + "|";
 }
 
+function toggleManualEdit() {
+    const textarea = document.getElementById('searchQuery');
+    const btn = document.getElementById('manual-edit-btn');
+    
+    if (textarea.readOnly) {
+        // Sallitaan vapaa kirjoitus
+        textarea.readOnly = false;
+        textarea.setAttribute('inputmode', 'text');
+        textarea.style.backgroundColor = "#fffde7"; // Kellertävä tausta muokkaustilassa
+        textarea.focus();
+        btn.innerText = "✅";
+    } else {
+        // Palataan takaisin nappulasyöttöön
+        textarea.readOnly = true;
+        textarea.setAttribute('inputmode', 'none');
+        textarea.style.backgroundColor = "white";
+        btn.innerText = "✏️";
+    }
+}
+
+// --- LATAUS JA HAKU ---
+
 async function initApp() {
+    const loaderBar = document.getElementById("loader-bar");
+    const loaderPercent = document.getElementById("loader-percent");
     const loaderContainer = document.getElementById("loader-container");
+
     for (let i = 0; i < urls.length; i++) {
         try {
             const response = await fetch(urls[i]);
             const text = await response.text();
             const startIdx = text.indexOf('[');
             const endIdx = text.lastIndexOf(']');
+            
             if (startIdx !== -1 && endIdx !== -1) {
                 const data = new Function('return ' + text.substring(startIdx, endIdx + 1))();
                 if (Array.isArray(data)) {
@@ -158,12 +215,22 @@ async function initApp() {
                     });
                 }
             }
+            const progress = Math.round(((i + 1) / urls.length) * 100);
+            if (loaderBar) loaderBar.style.width = progress + "%";
+            if (loaderPercent) loaderPercent.textContent = progress + "%";
         } catch (e) { console.error(e); }
     }
     if (loaderContainer) loaderContainer.style.display = 'none';
 }
 
 function handleSearch() {
+
+    if (ABCJS.synth.supportsAudio()) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }
     const abcEditor = document.getElementById('searchQuery');
     const input = abcEditor.value;
     const searchBtn = document.getElementById('search-btn');
@@ -173,9 +240,11 @@ function handleSearch() {
         return;
     }
 
+    // Muutetaan napin teksti hetkeksi
     searchBtn.innerText = "Etsitään...";
     searchBtn.disabled = true;
 
+    // Käytetään setTimeoutia, jotta "Etsitään..." ehtii piirtyä ennen raskasta hakua
     setTimeout(() => {
         let rawFP = getFingerprint(input);
         if (!rawFP) {
@@ -184,11 +253,17 @@ function handleSearch() {
             return;
         }
 
-        let searchIntervals = rawFP.split('|').filter(x => x.length > 0).map(x => x.split(':')[0]).join('|');
+        let searchIntervals = rawFP.split('|')
+                                   .filter(x => x.length > 0)
+                                   .map(x => x.split(':')[0])
+                                   .join('|');
 
         const matches = window.melodyLibrary.filter(t => {
             if (!t.fingerprint) return false;
-            let libIntervals = t.fingerprint.split('|').filter(x => x.length > 0).map(x => x.split(':')[0]).join('|');
+            let libIntervals = t.fingerprint.split('|')
+                                           .filter(x => x.length > 0)
+                                           .map(x => x.split(':')[0])
+                                           .join('|');
             return libIntervals.includes(searchIntervals);
         });
 
@@ -197,64 +272,163 @@ function handleSearch() {
         list.innerHTML = "";
 
         matches.slice(0, 50).forEach(tune => {
-            const div = document.createElement('div');
-            div.className = 'tune-card';
-            div.innerHTML = `<h3>${tune.name}</h3>`;
+    const div = document.createElement('div');
+    div.className = 'tune-card';
+
+    let displayName = tune.name;
+    const abc = tune.abc;
+
+    // Apufunktio kentän poimimiseen (varmempi versio)
+    function getAbcField(fieldTag) {
+        const tag = "\n" + fieldTag + ":";
+        const startIdx = abc.indexOf(tag);
+        if (startIdx === -1) return null;
+
+        let contentStart = startIdx + tag.length;
+        let remaining = abc.substring(contentStart);
+        
+        // Etsitään loppukohta (joko oikea rivinvaihto tai \n-teksti)
+        let endIdx = remaining.indexOf("\n");
+        let altEndIdx = remaining.indexOf("\\n");
+        let finalEnd;
+        
+        if (endIdx !== -1 && altEndIdx !== -1) finalEnd = Math.min(endIdx, altEndIdx);
+        else finalEnd = (endIdx !== -1) ? endIdx : altEndIdx;
+
+        let result = (finalEnd !== -1) ? remaining.substring(0, finalEnd) : remaining;
+        return result.replace(/[\\"]/g, "").trim();
+    }
+
+    let metaParts = [];
+    const nameUpper = tune.name.toUpperCase();
+
+    // SÄÄNTÖ 1: VIA-alkuiset (aiempi sääntö)
+    if (nameUpper.startsWith("VIA")) {
+        const rVal = getAbcField("R");
+        const sVal = getAbcField("S");
+        if (rVal && rVal !== "-") metaParts.push(rVal);
+        if (sVal && sVal !== "-") metaParts.push(sVal);
+    } 
+    // SÄÄNTÖ 2: kt1, rs1, rs2 -> M: ja O:
+    else if (nameUpper.startsWith("KT1") || nameUpper.startsWith("RS1") || nameUpper.startsWith("RS2")) {
+        const mVal = getAbcField("M");
+        const oVal = getAbcField("O");
+        if (mVal && mVal !== "-") metaParts.push(mVal);
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
+    // SÄÄNTÖ 3: hs1 -> N: ja O:
+    else if (nameUpper.startsWith("HS1")) {
+        const nVal = getAbcField("N");
+        const oVal = getAbcField("O");
+        if (nVal && nVal !== "-") metaParts.push(nVal);
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
+    // SÄÄNTÖ 4: ls1, ls2, ls3, ls4 -> "laulusävelmä" ja O:
+    else if (/^LS[1-4]/.test(nameUpper)) {
+        metaParts.push("laulusävelmä");
+        const oVal = getAbcField("O");
+        if (oVal && oVal !== "-") metaParts.push(oVal);
+    }
+
+    // Yhdistetään ja lisätään nimen perään
+    if (metaParts.length > 0) {
+        let combinedMeta = metaParts.join(", ");
+        if (combinedMeta.length > 70) combinedMeta = combinedMeta.substring(0, 67) + "...";
+        displayName += ` <span class="meta-info">(${combinedMeta})</span>`;
+    }
+
+    div.innerHTML = `<h3>${displayName}</h3>`;
+    
+    div.onclick = function() {
+    currentAbc = tune.abc;
+    
+    if (synthControl) {
+        synthControl.pause();
+        // Emme nollaa tässä synthControlia, jotta temposäädin pysyy kytkettynä
+    }
+    
+    const audioContainer = document.getElementById('audio-controls');
+    audioContainer.innerHTML = "";
+    audioContainer.style.display = 'block';
+
+    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
+    
+    // POISTA 'const' tästä alta, jotta se tallentuu globaaliin visualObj-muuttujaan
+    visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
+        responsive: 'resize',
+        paddingbottom: 30 // Tärkeä tila huuliharpputablatureille [cite: 2026-03-22]
+    })[0];
+    
+    if (ABCJS.synth.supportsAudio()) {
+        const synth = new ABCJS.synth.CreateSynth();
+        
+        synth.init({ 
+            visualObj: visualObj,
+            audioContext: new (window.AudioContext || window.webkitAudioContext)() 
+        })
+        .then(function() {
+            // Käytetään globaalia synthControlia
+            if (!synthControl) {
+                synthControl = new ABCJS.synth.SynthController();
+            }
             
-            div.onclick = function() {
-                currentAbc = tune.abc;
-                if (synthControl) synthControl.pause();
-                
-                const audioContainer = document.getElementById('audio-controls');
-                audioContainer.innerHTML = "";
-                audioContainer.style.display = 'block';
-
-                const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
-                visualObj = ABCJS.renderAbc("paper", abcWithTempo, { responsive: 'resize', paddingbottom: 30 })[0];
-
-                if (ABCJS.synth.supportsAudio()) {
-                    const synth = new ABCJS.synth.CreateSynth();
-                    synth.init({ 
-                        visualObj: visualObj,
-                        audioContext: new (window.AudioContext || window.webkitAudioContext)() 
-                    }).then(() => {
-                        if (!synthControl) synthControl = new ABCJS.synth.SynthController();
-                        synthControl.load("#audio-controls", null, { displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true });
-                        const currentBpm = parseInt(document.getElementById('tempoRange').value) || 100;
-                        return synthControl.setTune(visualObj, false, { bpm: currentBpm });
-                    });
-                }
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            };
+            synthControl.load("#audio-controls", null, {
+                displayRestart: true,
+                displayPlay: true,
+                displayProgress: true,
+                displayWarp: true
+            });
+            
+            // Haetaan nykyinen tempo liukusäätimestä
+            const currentBpm = parseInt(document.getElementById('tempoRange').value) || 100;
+            return synthControl.setTune(visualObj, false, { bpm: currentBpm });
+        })
+        .catch(function(error) {
+            console.warn("Audio-ongelma:", error);
+        });
+    }
+    
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
             list.appendChild(div);
         });
+
+        // Palautetaan nappi ennalleen
         searchBtn.innerText = "Hae kappaleita";
         searchBtn.disabled = false;
     }, 50);
 }
 
-// --- TAPAHTUMANKUUNTELIJAT ---
+// --- TAPAHTUMAT ---
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
-
+    
+    const abcEditor = document.getElementById('searchQuery');
     const tempoRange = document.getElementById('tempoRange');
     const tempoDisplay = document.getElementById('tempoDisplay');
-    const abcEditor = document.getElementById('searchQuery');
 
+   // 1. Temposäätimen logiikka
     if (tempoRange) {
         tempoRange.addEventListener('input', () => {
             const newBpm = tempoRange.value;
-            if (tempoDisplay) tempoDisplay.innerText = newBpm;
             changeTempo(newBpm);
         });
     }
 
+    // 2. Esikatselun päivitys
     if (abcEditor) {
         abcEditor.addEventListener('input', () => {
-            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { responsive: 'resize', scale: 0.7 });
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
         });
     }
 
+    // 3. Kesto-napit
     document.querySelectorAll('.dur-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -263,14 +437,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // 4. Piste-nappi
     const dotBtn = document.getElementById('dot-btn');
     if (dotBtn) {
-        dotBtn.addEventListener('click', () => {
+        dotBtn.addEventListener('click', (e) => {
             isDottedMode = !isDottedMode;
-            dotBtn.classList.toggle('active', isDottedMode);
+            e.target.classList.toggle('active', isDottedMode);
         });
     }
 
+    // 5. Etumerkki-napit
     document.querySelectorAll('.acc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             selectedAccidental = btn.classList.contains('active') ? "" : btn.getAttribute('data-acc');
@@ -279,46 +455,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // 6. Nuotti-napit
     document.querySelectorAll('.note-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
-            playSingleNote(selectedAccidental + note);
+            // --- UUSI OSA: SOITETAAN SÄVEL ---
+        // Muodostetaan nuotti etumerkillä, jotta se kuulostaa oikealta
+        const noteToPlay = selectedAccidental + note;
+        playSingleNote(noteToPlay);
+        // ---------------------------------
             let dur = selectedDuration;
+            
             if (isDottedMode && note !== 'z') {
-                const dotMap = { "1": "3/2", "2": "3", "/2": "3/4", "/4": "3/8" };
-                dur = dotMap[selectedDuration] || dur;
+                if (selectedDuration === "1") dur = "3/2";
+                else if (selectedDuration === "2") dur = "3";
+                else if (selectedDuration === "/2") dur = "3/4";
+                else if (selectedDuration === "/4") dur = "3/8";
                 isDottedMode = false;
                 if (dotBtn) dotBtn.classList.remove('active');
             } else if (selectedDuration === "1") {
                 dur = "";
             }
+
             const noteString = selectedAccidental + note + dur + " ";
             const start = abcEditor.selectionStart;
-            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(abcEditor.selectionEnd);
+            const end = abcEditor.selectionEnd;
+            
+            abcEditor.value = abcEditor.value.slice(0, start) + noteString + abcEditor.value.slice(end);
             abcEditor.selectionStart = abcEditor.selectionEnd = start + noteString.length;
+            
             selectedAccidental = "";
             document.querySelectorAll('.acc-btn').forEach(b => b.classList.remove('active'));
             abcEditor.focus();
-            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { responsive: 'resize', scale: 0.7 });
+
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
         });
     });
 
+    // 7. Hae-nappi
     const searchBtn = document.getElementById('search-btn');
-    if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            handleSearch();
+        });
+    }
 
+    // 8. Backspace-painike
     const backspaceBtn = document.getElementById('backspace-btn');
     if (backspaceBtn) {
         backspaceBtn.addEventListener('click', () => {
             const start = abcEditor.selectionStart;
-            if (start > 0) {
-                abcEditor.value = abcEditor.value.slice(0, start - 1) + abcEditor.value.slice(abcEditor.selectionEnd);
+            const end = abcEditor.selectionEnd;
+            const value = abcEditor.value;
+
+            if (start === end && start > 0) {
+                abcEditor.value = value.slice(0, start - 1) + value.slice(end);
                 abcEditor.selectionStart = abcEditor.selectionEnd = start - 1;
+            } else if (start !== end) {
+                abcEditor.value = value.slice(0, start) + value.slice(end);
+                abcEditor.selectionStart = abcEditor.selectionEnd = start;
             }
-            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { responsive: 'resize', scale: 0.7 });
+
+            ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
+                responsive: 'resize', 
+                scale: 0.7 
+            });
             abcEditor.focus();
         });
     }
-
+    
+    // 9. Tyhjennys
     const clearBtn = document.getElementById('clearSearch');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
@@ -328,4 +537,4 @@ document.addEventListener('DOMContentLoaded', () => {
             ABCJS.renderAbc("search-preview", ""); 
         });
     }
-});
+}); // Tämä sulkee DOMContentLoaded-funktion oikein
