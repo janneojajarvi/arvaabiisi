@@ -23,20 +23,18 @@ let visualObj; // Globaali muuttuja temposäädintä varten
 
 let currentWarp = 1.0;
 
-function changeTempo(modifier) {
-    if (!synthControl) return;
+function changeTempo(newBpm) {
+    if (!synthControl || !visualObj) return;
     
-    currentWarp *= modifier;
-    // Pidetään tempo järkevissä rajoissa
-    if (currentWarp < 0.3) currentWarp = 0.3;
-    if (currentWarp > 2.0) currentWarp = 2.0;
-    
-    // Päivitetään ABCJS-soitin
-    synthControl.setWarp(currentWarp * 100);
-    
-    // Päivitetään tekstinäyttö
-    document.getElementById('current-tempo-display').innerText = 
-        "Tempo: " + Math.round(currentWarp * 100) + "%";
+    // Päivitetään ABCJS-soitin lennosta
+    synthControl.setTune(visualObj, false, { bpm: parseInt(newBpm) })
+        .then(() => {
+            console.log("Tempo päivitetty:", newBpm);
+            // Päivitetään tekstinäyttö (jos sinulla on sellainen)
+            const display = document.getElementById('tempoDisplay');
+            if (display) display.innerText = newBpm;
+        })
+        .catch(err => console.warn("Tempon päivitysvirhe:", err));
 }
 
 // --- APUFUNKTIOT ---
