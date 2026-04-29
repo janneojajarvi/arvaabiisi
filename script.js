@@ -363,30 +363,36 @@ function handleSearch() {
     div.innerHTML = `<h3>${displayName}</h3>`;
     
     div.onclick = function() {
-    // 1. Tallennetaan valittu ABC globaaliin muuttujaan
-    currentAbc = tune.abc;
-    
-    // 2. Valmistellaan ABC (lisätään tempo-ohje jos puuttuu)
-    const abcWithTempo = currentAbc.includes("Q:") ? currentAbc : "Q:100\n" + currentAbc;
-    
-    // 3. Piirretään nuotit (Huom: visualObj on globaali, ei 'const' tähän!)
-    visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
-        responsive: 'resize',
-        paddingbottom: 35 
-    })[0];
+        // 1. Tallennetaan valittu ABC globaaliin muuttujaan
+        currentAbc = tune.abc;
+        
+        // 2. Valmistellaan ABC
+        const abcWithTempo = currentAbc.includes("Q:") ? currentAbc : "Q:100\n" + currentAbc;
+        
+        // 3. Piirretään nuotit
+        visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
+            responsive: 'resize',
+            paddingbottom: 35 
+        })[0];
 
-        // 4. Haetaan liukusäätimen (sliderin) senhetkinen arvo
-    const currentSliderValue = document.getElementById('tempoRange').value;
-    
-    // 5. Kutsutaan uutta changeTempo-funktiota, joka hoitaa audion alustuksen
-    changeTempo(currentSliderValue);
-    
-    // 6. Skrollataan alas nuotteihin
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-};
-    
-   
-            list.appendChild(div);
+        // 4. Haetaan liukusäätimen arvo
+        const currentSliderValue = document.getElementById('tempoRange').value;
+
+        // --- TÄMÄ PUUTTUI: TUODAAN SOITIN NÄKYVIIN ---
+        const audioContainer = document.getElementById('audio-controls');
+        if (audioContainer) {
+            audioContainer.style.display = 'block';
+        }
+        
+        // 5. Alustetaan audio
+        changeTempo(currentSliderValue);
+        
+        // 6. Skrollaus
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+
+    // Tämän jälkeen listaan lisääminen ja silmukan sulkeminen
+    list.appendChild(div);
         });
 
         // Palautetaan nappi ennalleen
