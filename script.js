@@ -26,18 +26,31 @@ let currentWarp = 1.0;
  function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
     
-    // Päivitetään tekstinäyttö
+    // 1. Päivitetään näyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
 
-    // Jos soitin (synthControl) ja nuotit (visualObj) ovat olemassa, päivitetään tempo
-    if (synthControl && visualObj) {
-        // false = ei piirretä nuotteja uudelleen, päivitetään vain ääni
-        synthControl.setTune(visualObj, false, { bpm: bpm })
-            .then(() => console.log("Tempo vaihdettu:", bpm))
-            .catch(err => console.warn("Virhe tempon vaihdossa:", err));
-    }
+    // 2. Varmistetaan että kappale ja soitin ovat olemassa
+    if (!currentAbc || !synthControl) return;
+
+    // 3. Poistetaan vanhat Q-tagit (tempot) ABC-tekstistä säännöllisellä lausekkeella (regex)
+    let cleanAbc = currentAbc.replace(/^Q:.*$/gm, "").trim();
+    
+    // 4. Pakotetaan uusi tempo tekstin alkuun
+    let newAbc = "Q:" + bpm + "\n" + cleanAbc;
+
+    // 5. Piirretään nuotit uudelleen (tämä päivittää globaalin visualObj-muuttujan)
+    visualObj = ABCJS.renderAbc("paper", newAbc, { 
+        responsive: 'resize',
+        paddingbottom: 35 
+    })[0];
+
+    // 6. Syötetään uusi versio soittimeen. 
+    // Emme tarvitse enää ylimääräisiä { bpm } -parametreja, koska tempo on upotettu nuotteihin.
+    synthControl.setTune(visualObj, false)
+        .then(() => console.log("Tempo pakotettu:", bpm))
+        .catch(err => console.warn("Virhe tempon päivityksessä:", err));
 }
 
 // --- APUFUNKTIOT ---
@@ -333,13 +346,17 @@ function handleSearch() {
     div.innerHTML = `<h3>${displayName}</h3>`;
      
     div.onclick = function() {
-        // 1. Tallennetaan valittu ABC globaaliin muuttujaan
+        // 1. Tallennetaan ABC
         currentAbc = tune.abc;
         
-        // 2. Valmistellaan ABC (varmistetaan oletustempo)
-        const abcWithTempo = currentAbc.includes("Q:") ? currentAbc : "Q:100\n" + currentAbc;
+        // 2. Haetaan sliderin arvo HETI alkuun
+        const startBpm = document.getElementById('tempoRange').value || 100;
         
-        // 3. Piirretään nuotit (Huom: visualObj on globaali)
+        // 3. Puhdistetaan vanhat tempot ja pakotetaan sliderin nopeus
+        let cleanAbc = currentAbc.replace(/^Q:.*$/gm, "").trim();
+        let abcWithTempo = "Q:" + startBpm + "\n" + cleanAbc;
+        
+        // 4. Piirretään nuotit
         visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
             responsive: 'resize',
             paddingbottom: 35 
@@ -380,7 +397,9 @@ function handleSearch() {
                 
                 // Luetaan sliderin nykyinen arvo ja asetetaan se heti
                 const currentSliderValue = document.getElementById('tempoRange').value;
-                return synthControl.setTune(visualObj, false, { bpm: parseInt(currentSliderValue) });
+                return synthControl.setTune(visualObj, false);
+            }).then(function() {
+                console.log("Soitin valmis!");
             }).catch(function(err) {
                 console.warn("Audioalustus epäonnistui:", err);
             });
