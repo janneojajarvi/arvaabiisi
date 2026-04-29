@@ -18,6 +18,7 @@ let selectedAccidental = "";
 let isDottedMode = false;
 let synthControl;
 let currentAbc;
+let visualObj; // Globaali muuttuja temposäädintä varten
 
 
 let currentWarp = 1.0;
@@ -392,7 +393,7 @@ function handleSearch() {
 
 // --- TAPAHTUMAT ---
 
-let visualObj; // Globaali muuttuja temposäädintä varten
+
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
