@@ -369,8 +369,11 @@ function handleSearch() {
                 visualObj: visualObj,
                 audioContext: window.myAudioContext 
             }).then(function() {
+               // TÄSTÄ ALKAA KORVAAVA KOODI:
                 if (!synthControl) {
                     synthControl = new ABCJS.synth.SynthController();
+                } else {
+                    synthControl.pause(); // Pysäytetään edellinen soitto
                 }
                 
                 // Ladataan ohjain käyttöliittymään
@@ -381,9 +384,13 @@ function handleSearch() {
                     displayWarp: true
                 });
                 
-                // Haetaan sliderin arvo ja asetetaan se heti soittimeen
+                // Haetaan sliderin senhetkinen arvo
                 const currentSliderValue = document.getElementById('tempoRange').value;
+                
+                // Asetetaan biisi ja pakotetaan tempo sliderin mukaiseksi
                 return synthControl.setTune(visualObj, false, { bpm: parseInt(currentSliderValue) });
+            }).then(function() {
+                console.log("Soitin valmis ja tempo asetettu.");
             }).catch(function(err) {
                 console.warn("Audioalustus epäonnistui:", err);
             });
