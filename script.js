@@ -23,7 +23,7 @@ let visualObj; // Globaali muuttuja temposäädintä varten
 
 let currentWarp = 1.0;
 
- unction changeTempo(newBpm) {
+ function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
