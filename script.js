@@ -55,7 +55,6 @@ function changeTempo(newBpm) {
             audioContext: new (window.AudioContext || window.webkitAudioContext)() 
         })
         .then(() => {
-            // Luodaan ohjain uudelleen globaaliin muuttujaan
             synthControl = new ABCJS.synth.SynthController();
             
             synthControl.load("#audio-controls", null, {
@@ -65,8 +64,14 @@ function changeTempo(newBpm) {
                 displayWarp: true
             });
             
-            console.log("Alustetaan uusi tempo:", bpm);
+            // Asetetaan tempo ja varmistetaan, että synth valmistelee äänen uudelleen
             return synthControl.setTune(visualObj, false, { bpm: bpm });
+        })
+        .then(() => {
+            // Lisätään tämä: Jos soitin on jo olemassa, prime() varmistaa että audio-puskurit päivittyvät
+            if (synthControl && synthControl.synth) {
+                return synthControl.synth.prime();
+            }
         })
         .catch(err => console.warn("Virhe tempossa:", err));
     }
