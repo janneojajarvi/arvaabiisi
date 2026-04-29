@@ -23,25 +23,14 @@ let visualObj; // Globaali muuttuja temposäädintä varten
 
 let currentWarp = 1.0;
 
-function changeTempo(newBpm) {
+ unction changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
-    
-    // 1. Päivitetään tekstinäyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
-
-    // 2. TARKISTUS: Jos visualObj puuttuu, ei voida tehdä mitään
-    if (!visualObj) return;
-
-    // 3. JOS synthControl on jo olemassa, päivitetään vain tempo lennosta
-    if (synthControl) {
-        // false tarkoittaa: älä piirrä nuotteja uudelleen, päivitä vain audio
-        synthControl.setTune(visualObj, false, { bpm: bpm })
-            .then(() => {
-                console.log("Tempo päivitetty lennosta:", bpm);
-            })
-            .catch(err => console.warn("Lennosta päivitys epäonnistui:", err));
+    if (synthControl && visualObj) {
+        // false = ei piirretä nuotteja uusiksi, päivitetään vain audio
+        synthControl.setTune(visualObj, false, { bpm: bpm });
     }
 }
 
