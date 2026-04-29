@@ -400,18 +400,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoRange = document.getElementById('tempoRange');
     const tempoDisplay = document.getElementById('tempoDisplay');
 
-    // 1. Temposäätimen logiikka
+   // 1. Temposäätimen logiikka
     if (tempoRange) {
-        tempoRange.oninput = () => {
+        tempoRange.addEventListener('input', () => {
             const newBpm = tempoRange.value;
-            if (tempoDisplay) tempoDisplay.innerText = newBpm;
-            
-            if (synthControl && visualObj) {
-                synthControl.setTune(visualObj, false, { bpm: parseInt(newBpm) })
-                    .then(() => console.log("Tempo päivitetty: " + newBpm))
-                    .catch(err => console.warn("Tempon päivitysvirhe:", err));
-            }
-        };
+            changeTempo(newBpm);
+        });
     }
 
     // 2. Esikatselun päivitys
