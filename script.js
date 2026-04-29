@@ -1,4 +1,4 @@
-window.melodyLibrary = [];
+ window.melodyLibrary = [];
 
 const urls = [
     "sessionSet01.js", "sessionSet02.js", "sessionSet03.js", "sessionSet04.js",
@@ -34,11 +34,9 @@ function changeTempo(newBpm) {
     // 2. TARKISTUS: Jos visualObj puuttuu, ei voida tehdä mitään
     if (!visualObj) return;
 
-    // 3. JOS synthControl on jo olemassa, päivitetään vain tempo
-    // Tämä on Pitkistoolin tapa: käytetään olemassa olevaa ohjainta
+    // 3. JOS synthControl on jo olemassa, päivitetään vain tempo lennosta
     if (synthControl) {
-        // setTune(obj, visualPäivitys, audioParametrit)
-        // false tarkoittaa, ettei nuotteja piirretä uudelleen (nopeuttaa toimintaa)
+        // false tarkoittaa: älä piirrä nuotteja uudelleen, päivitä vain audio
         synthControl.setTune(visualObj, false, { bpm: bpm })
             .then(() => {
                 console.log("Tempo päivitetty lennosta:", bpm);
