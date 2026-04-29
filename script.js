@@ -26,31 +26,16 @@ let currentWarp = 1.0;
  function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
     
-    // 1. Päivitetään näyttö
+    // Päivitetään tekstinäyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
 
-    // 2. Varmistetaan että kappale ja soitin ovat olemassa
-    if (!currentAbc || !synthControl) return;
-
-    // 3. Poistetaan vanhat Q-tagit (tempot) ABC-tekstistä säännöllisellä lausekkeella (regex)
-    let cleanAbc = currentAbc.replace(/^Q:.*$/gm, "").trim();
-    
-    // 4. Pakotetaan uusi tempo tekstin alkuun
-    let newAbc = "Q:" + bpm + "\n" + cleanAbc;
-
-    // 5. Piirretään nuotit uudelleen (tämä päivittää globaalin visualObj-muuttujan)
-    visualObj = ABCJS.renderAbc("paper", newAbc, { 
-        responsive: 'resize',
-        paddingbottom: 35 
-    })[0];
-
-    // 6. Syötetään uusi versio soittimeen. 
-    // Emme tarvitse enää ylimääräisiä { bpm } -parametreja, koska tempo on upotettu nuotteihin.
-    synthControl.setTune(visualObj, false)
-        .then(() => console.log("Tempo pakotettu:", bpm))
-        .catch(err => console.warn("Virhe tempon päivityksessä:", err));
+    // Käytetään ABCJS:n sisäänrakennettua warp-metodia!
+    // Koska biisi on aina pohjimmiltaan Q:100, setWarp(120) tarkoittaa suoraan 120 BPM.
+    if (synthControl) {
+        synthControl.setWarp(bpm);
+    }
 }
 
 // --- APUFUNKTIOT ---
@@ -346,36 +331,32 @@ function handleSearch() {
     div.innerHTML = `<h3>${displayName}</h3>`;
      
     div.onclick = function() {
-        // 1. Tallennetaan ABC
         currentAbc = tune.abc;
         
-        // 2. Haetaan sliderin arvo HETI alkuun
-        const startBpm = document.getElementById('tempoRange').value || 100;
-        
-        // 3. Puhdistetaan vanhat tempot ja pakotetaan sliderin nopeus
+        // 1. Puhdistetaan vanhat tempot ja pakotetaan AINA Q:100 pohjalle
         let cleanAbc = currentAbc.replace(/^Q:.*$/gm, "").trim();
-        let abcWithTempo = "Q:" + startBpm + "\n" + cleanAbc;
+        let abcWithTempo = "Q:100\n" + cleanAbc;
         
-        // 4. Piirretään nuotit
+        // 2. Piirretään nuotit
         visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
             responsive: 'resize',
             paddingbottom: 35 
         })[0];
 
-        // 4. Tuodaan soitin-kontainer näkyviin
+        // 3. Tuodaan soitin näkyviin
         const audioContainer = document.getElementById('audio-controls');
         if (audioContainer) {
             audioContainer.style.display = 'block';
-            audioContainer.innerHTML = ""; // Tyhjennetään vanha soitin
+            audioContainer.innerHTML = ""; 
         }
 
-       // 5. Alustetaan audio Pitkistool-tyyliin
+        // 4. Alustetaan audio
         if (ABCJS.synth.supportsAudio()) {
             if (!window.myAudioContext) {
                 window.myAudioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
 
-            // Pysäytetään edellinen soitto, jos sellainen on käynnissä
+            // Pysäytetään vanha soitto
             if (synthControl) synthControl.pause();
 
             const synth = new ABCJS.synth.CreateSynth();
@@ -383,7 +364,6 @@ function handleSearch() {
                 visualObj: visualObj,
                 audioContext: window.myAudioContext 
             }).then(function() {
-                // TÄRKEÄÄ: Käytetään globaalia synthControlia ilman 'const' tai 'let' sanaa
                 if (!synthControl) {
                     synthControl = new ABCJS.synth.SynthController();
                 }
@@ -392,20 +372,20 @@ function handleSearch() {
                     displayRestart: true,
                     displayPlay: true,
                     displayProgress: true,
-                    displayWarp: true
+                    displayWarp: true 
                 });
                 
-                // Luetaan sliderin nykyinen arvo ja asetetaan se heti
-                const currentSliderValue = document.getElementById('tempoRange').value;
+                // Ladataan perusbiisi (Q:100) ohjaimeen
                 return synthControl.setTune(visualObj, false);
             }).then(function() {
-                console.log("Soitin valmis!");
+                // TAIKA TAPAHTUU TÄSSÄ: Pakotetaan sliderin nopeus warp-komennolla HETI
+                const currentSliderValue = parseInt(document.getElementById('tempoRange').value) || 100;
+                synthControl.setWarp(currentSliderValue);
             }).catch(function(err) {
                 console.warn("Audioalustus epäonnistui:", err);
             });
         }
         
-        // 6. Skrollaus
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     };
 
