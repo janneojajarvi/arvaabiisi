@@ -403,22 +403,37 @@ function handleSearch() {
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    
-    const abcEditor = document.getElementById('searchQuery');
+  
+    // --- 1. Temposäätimen logiikka (Yhdistetty versio) ---
     const tempoRange = document.getElementById('tempoRange');
     const tempoDisplay = document.getElementById('tempoDisplay');
+    const abcEditor = document.getElementById('searchQuery');
 
-   // 1. Temposäätimen logiikka
     if (tempoRange) {
+        // Käytetään addEventListeneriä, se on siistimpi
         tempoRange.addEventListener('input', () => {
             const newBpm = tempoRange.value;
-            changeTempo(newBpm);
+            
+            // Päivitetään numeronäyttö
+            if (tempoDisplay) {
+                tempoDisplay.innerText = newBpm;
+            }
+            
+            // Kutsutaan ulkopuolella olevaa changeTempo-funktiota
+            // Se hoitaa synthControlin ja visualObjin päivittämisen
+            if (typeof changeTempo === "function") {
+                changeTempo(newBpm);
+            } else {
+                // Varmistus, jos funktiota ei löydy:
+                if (synthControl && visualObj) {
+                    synthControl.setWarp(newBpm / 100);
+                    console.log("Suora warp-muutos: " + newBpm);
+                }
+            }
         });
     }
 
-    // 2. Esikatselun päivitys
+    // --- 2. Esikatselun päivitys ---
     if (abcEditor) {
         abcEditor.addEventListener('input', () => {
             ABCJS.renderAbc("search-preview", "L:1/4\nM:none\n" + abcEditor.value, { 
