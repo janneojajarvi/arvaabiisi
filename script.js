@@ -405,6 +405,31 @@ function handleSearch() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
+
+    // 1. Temposäätimen logiikka (Laita tämä DOMContentLoadedin sisään)
+    const tempoRange = document.getElementById('tempoRange');
+    const tempoDisplay = document.getElementById('tempoDisplay');
+
+    if (tempoRange) {
+        tempoRange.oninput = () => {
+            const newBpm = parseInt(tempoRange.value);
+            if (tempoDisplay) tempoDisplay.innerText = newBpm;
+            
+            // Tarkistetaan, että meillä on soitin ja nuotit valmiina
+            if (synthControl && visualObj) {
+                // setWarp on usein tehokkaampi lennosta tapahtuvaan muutokseen
+                // Lasketaan suhdeluku (BPM / 100), koska warp olettaa 1.0 = normaali
+                const warpFactor = newBpm / 100;
+                
+                // Päivitetään tempo lennosta
+                synthControl.setWarp(warpFactor);
+                
+                // Jos haluat varmistaa päivityksen, voit kutsua myös setTune,
+                // mutta setWarp(newBpm/100) pitäisi muuttaa nopeutta heti.
+                console.log("Slider muutti tempon: " + newBpm);
+            }
+        };
+    }
     
     const abcEditor = document.getElementById('searchQuery');
     const tempoRange = document.getElementById('tempoRange');
