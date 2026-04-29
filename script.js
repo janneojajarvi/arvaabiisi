@@ -25,16 +25,26 @@ let currentWarp = 1.0;
 
 function changeTempo(newBpm) {
     if (!synthControl || !visualObj) return;
+
+    const bpm = parseInt(newBpm);
     
-    // Päivitetään ABCJS-soitin lennosta
-    synthControl.setTune(visualObj, false, { bpm: parseInt(newBpm) })
+    // Tarkistetaan onko soitto käynnissä
+    const wasPlaying = synthControl.status === "playing";
+
+    // setTune päivittää sisäisen rakenteen
+    synthControl.setTune(visualObj, false, { bpm: bpm })
         .then(() => {
-            console.log("Tempo päivitetty:", newBpm);
-            // Päivitetään tekstinäyttö (jos sinulla on sellainen)
-            const display = document.getElementById('tempoDisplay');
-            if (display) display.innerText = newBpm;
+            console.log("Tempo asetettu: " + bpm);
+            if (wasPlaying) {
+                // Jos musiikki soi, pakotetaan se päivittymään 
+                // Tämä on varmin tapa saada ABCJS reagoimaan heti
+                synthControl.play(); 
+            }
+            if (document.getElementById('tempoDisplay')) {
+                document.getElementById('tempoDisplay').innerText = bpm;
+            }
         })
-        .catch(err => console.warn("Tempon päivitysvirhe:", err));
+        .catch(err => console.warn("Virhe tempon päivityksessä:", err));
 }
 
 // --- APUFUNKTIOT ---
