@@ -26,25 +26,27 @@ let currentWarp = 1.0;
 function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
     
-    // 1. Päivitä tekstinäyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
 
-    // 2. Tarkistetaan, onko meillä mitä soittaa
-    // Huom: Varmista, että 'currentAbc' ja 'visualObj' ovat globaalisti saatavilla
-    if (!currentAbc || !visualObj) return;
+    // DEBUG: Katsotaan, puuttuuko jotain
+    if (!visualObj) {
+        console.error("Tempo ei muutu: visualObj on tyhjä!");
+        return;
+    }
+    if (!currentAbc) {
+        console.error("Tempo ei muutu: currentAbc on tyhjä!");
+        return;
+    }
 
-    // 3. Pysäytetään vanha soitto jos se on käynnissä
     if (synthControl) {
         synthControl.pause();
     }
 
-    // 4. Tyhjennetään audio-ohjaimen näkymä (Harptune-tyyli)
     const audioContainer = document.getElementById('audio-controls');
     audioContainer.innerHTML = ""; 
 
-    // 5. Alustetaan uusi audio uudella tempolla
     if (ABCJS.synth.supportsAudio()) {
         const synth = new ABCJS.synth.CreateSynth();
         
@@ -53,7 +55,7 @@ function changeTempo(newBpm) {
             audioContext: new (window.AudioContext || window.webkitAudioContext)() 
         })
         .then(() => {
-            // Luodaan ohjain uudelleen
+            // Luodaan ohjain uudelleen globaaliin muuttujaan
             synthControl = new ABCJS.synth.SynthController();
             
             synthControl.load("#audio-controls", null, {
@@ -63,10 +65,10 @@ function changeTempo(newBpm) {
                 displayWarp: true
             });
             
-            // TÄRKEÄÄ: Asetetaan uusi tempo tässä vaiheessa
+            console.log("Alustetaan uusi tempo:", bpm);
             return synthControl.setTune(visualObj, false, { bpm: bpm });
         })
-        .catch(err => console.warn("Audio-ongelma tempon vaihdossa:", err));
+        .catch(err => console.warn("Virhe tempossa:", err));
     }
 }
 
