@@ -25,12 +25,18 @@ let currentWarp = 1.0;
 
  function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
+    
+    // Päivitetään tekstinäyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
+
+    // Jos soitin (synthControl) ja nuotit (visualObj) ovat olemassa, päivitetään tempo
     if (synthControl && visualObj) {
-        // false = ei piirretä nuotteja uusiksi, päivitetään vain audio
-        synthControl.setTune(visualObj, false, { bpm: bpm });
+        // false = ei piirretä nuotteja uudelleen, päivitetään vain ääni
+        synthControl.setTune(visualObj, false, { bpm: bpm })
+            .then(() => console.log("Tempo vaihdettu:", bpm))
+            .catch(err => console.warn("Virhe tempon vaihdossa:", err));
     }
 }
 
@@ -325,7 +331,7 @@ function handleSearch() {
     }
 
     div.innerHTML = `<h3>${displayName}</h3>`;
-    
+     
     div.onclick = function() {
         // 1. Tallennetaan valittu ABC globaaliin muuttujaan
         currentAbc = tune.abc;
@@ -346,26 +352,25 @@ function handleSearch() {
             audioContainer.innerHTML = ""; // Tyhjennetään vanha soitin
         }
 
-        // 5. Alustetaan audio Pitkistool-tyyliin
+       // 5. Alustetaan audio Pitkistool-tyyliin
         if (ABCJS.synth.supportsAudio()) {
-            // Käytetään yhtä globaalia AudioContextia
             if (!window.myAudioContext) {
                 window.myAudioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
+
+            // Pysäytetään edellinen soitto, jos sellainen on käynnissä
+            if (synthControl) synthControl.pause();
 
             const synth = new ABCJS.synth.CreateSynth();
             synth.init({ 
                 visualObj: visualObj,
                 audioContext: window.myAudioContext 
             }).then(function() {
-               // TÄSTÄ ALKAA KORVAAVA KOODI:
+                // TÄRKEÄÄ: Käytetään globaalia synthControlia ilman 'const' tai 'let' sanaa
                 if (!synthControl) {
                     synthControl = new ABCJS.synth.SynthController();
-                } else {
-                    synthControl.pause(); // Pysäytetään edellinen soitto
                 }
                 
-                // Ladataan ohjain käyttöliittymään
                 synthControl.load("#audio-controls", null, {
                     displayRestart: true,
                     displayPlay: true,
@@ -373,13 +378,9 @@ function handleSearch() {
                     displayWarp: true
                 });
                 
-                // Haetaan sliderin senhetkinen arvo
+                // Luetaan sliderin nykyinen arvo ja asetetaan se heti
                 const currentSliderValue = document.getElementById('tempoRange').value;
-                
-                // Asetetaan biisi ja pakotetaan tempo sliderin mukaiseksi
                 return synthControl.setTune(visualObj, false, { bpm: parseInt(currentSliderValue) });
-            }).then(function() {
-                console.log("Soitin valmis ja tempo asetettu.");
             }).catch(function(err) {
                 console.warn("Audioalustus epäonnistui:", err);
             });
