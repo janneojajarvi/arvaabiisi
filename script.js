@@ -414,9 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
    // 1. Temposäätimen logiikka
     if (tempoRange) {
-        tempoRange.addEventListener('input', () => {
-            const newBpm = tempoRange.value;
-            changeTempo(newBpm);
+        tempoRange.addEventListener('input', (e) => {
+            console.log("Slideria liikutettu:", e.target.value); // Debug-viesti
+            changeTempo(e.target.value);
         });
     }
 
