@@ -26,54 +26,24 @@ let currentWarp = 1.0;
 function changeTempo(newBpm) {
     const bpm = parseInt(newBpm);
     
+    // 1. Päivitetään tekstinäyttö
     if (document.getElementById('tempoDisplay')) {
         document.getElementById('tempoDisplay').innerText = bpm;
     }
 
-    // DEBUG: Katsotaan, puuttuuko jotain
-    if (!visualObj) {
-        console.error("Tempo ei muutu: visualObj on tyhjä!");
-        return;
-    }
-    if (!currentAbc) {
-        console.error("Tempo ei muutu: currentAbc on tyhjä!");
-        return;
-    }
+    // 2. TARKISTUS: Jos visualObj puuttuu, ei voida tehdä mitään
+    if (!visualObj) return;
 
+    // 3. JOS synthControl on jo olemassa, päivitetään vain tempo
+    // Tämä on Pitkistoolin tapa: käytetään olemassa olevaa ohjainta
     if (synthControl) {
-        synthControl.pause();
-    }
-
-    const audioContainer = document.getElementById('audio-controls');
-    audioContainer.innerHTML = ""; 
-
-    if (ABCJS.synth.supportsAudio()) {
-        const synth = new ABCJS.synth.CreateSynth();
-        
-        synth.init({ 
-            visualObj: visualObj,
-            audioContext: new (window.AudioContext || window.webkitAudioContext)() 
-        })
-        .then(() => {
-            synthControl = new ABCJS.synth.SynthController();
-            
-            synthControl.load("#audio-controls", null, {
-                displayRestart: true,
-                displayPlay: true,
-                displayProgress: true,
-                displayWarp: true
-            });
-            
-            // Asetetaan tempo ja varmistetaan, että synth valmistelee äänen uudelleen
-            return synthControl.setTune(visualObj, false, { bpm: bpm });
-        })
-        .then(() => {
-            // Lisätään tämä: Jos soitin on jo olemassa, prime() varmistaa että audio-puskurit päivittyvät
-            if (synthControl && synthControl.synth) {
-                return synthControl.synth.prime();
-            }
-        })
-        .catch(err => console.warn("Virhe tempossa:", err));
+        // setTune(obj, visualPäivitys, audioParametrit)
+        // false tarkoittaa, ettei nuotteja piirretä uudelleen (nopeuttaa toimintaa)
+        synthControl.setTune(visualObj, false, { bpm: bpm })
+            .then(() => {
+                console.log("Tempo päivitetty lennosta:", bpm);
+            })
+            .catch(err => console.warn("Lennosta päivitys epäonnistui:", err));
     }
 }
 
