@@ -24,27 +24,50 @@ let visualObj; // Globaali muuttuja temposäädintä varten
 let currentWarp = 1.0;
 
 function changeTempo(newBpm) {
-    if (!synthControl || !visualObj) return;
-
     const bpm = parseInt(newBpm);
     
-    // Tarkistetaan onko soitto käynnissä
-    const wasPlaying = synthControl.status === "playing";
+    // 1. Päivitä tekstinäyttö
+    if (document.getElementById('tempoDisplay')) {
+        document.getElementById('tempoDisplay').innerText = bpm;
+    }
 
-    // setTune päivittää sisäisen rakenteen
-    synthControl.setTune(visualObj, false, { bpm: bpm })
-        .then(() => {
-            console.log("Tempo asetettu: " + bpm);
-            if (wasPlaying) {
-                // Jos musiikki soi, pakotetaan se päivittymään 
-                // Tämä on varmin tapa saada ABCJS reagoimaan heti
-                synthControl.play(); 
-            }
-            if (document.getElementById('tempoDisplay')) {
-                document.getElementById('tempoDisplay').innerText = bpm;
-            }
+    // 2. Tarkistetaan, onko meillä mitä soittaa
+    // Huom: Varmista, että 'currentAbc' ja 'visualObj' ovat globaalisti saatavilla
+    if (!currentAbc || !visualObj) return;
+
+    // 3. Pysäytetään vanha soitto jos se on käynnissä
+    if (synthControl) {
+        synthControl.pause();
+    }
+
+    // 4. Tyhjennetään audio-ohjaimen näkymä (Harptune-tyyli)
+    const audioContainer = document.getElementById('audio-controls');
+    audioContainer.innerHTML = ""; 
+
+    // 5. Alustetaan uusi audio uudella tempolla
+    if (ABCJS.synth.supportsAudio()) {
+        const synth = new ABCJS.synth.CreateSynth();
+        
+        synth.init({ 
+            visualObj: visualObj,
+            audioContext: new (window.AudioContext || window.webkitAudioContext)() 
         })
-        .catch(err => console.warn("Virhe tempon päivityksessä:", err));
+        .then(() => {
+            // Luodaan ohjain uudelleen
+            synthControl = new ABCJS.synth.SynthController();
+            
+            synthControl.load("#audio-controls", null, {
+                displayRestart: true,
+                displayPlay: true,
+                displayProgress: true,
+                displayWarp: true
+            });
+            
+            // TÄRKEÄÄ: Asetetaan uusi tempo tässä vaiheessa
+            return synthControl.setTune(visualObj, false, { bpm: bpm });
+        })
+        .catch(err => console.warn("Audio-ongelma tempon vaihdossa:", err));
+    }
 }
 
 // --- APUFUNKTIOT ---
@@ -340,56 +363,29 @@ function handleSearch() {
     div.innerHTML = `<h3>${displayName}</h3>`;
     
     div.onclick = function() {
+    // 1. Tallennetaan valittu ABC globaaliin muuttujaan
     currentAbc = tune.abc;
     
-    if (synthControl) {
-        synthControl.pause();
-        // Emme nollaa tässä synthControlia, jotta temposäädin pysyy kytkettynä
-    }
+    // 2. Valmistellaan ABC (lisätään tempo-ohje jos puuttuu)
+    const abcWithTempo = currentAbc.includes("Q:") ? currentAbc : "Q:100\n" + currentAbc;
     
-    const audioContainer = document.getElementById('audio-controls');
-    audioContainer.innerHTML = "";
-    audioContainer.style.display = 'block';
-
-    const abcWithTempo = tune.abc.includes("Q:") ? tune.abc : "Q:100\n" + tune.abc;
-    
-    // POISTA 'const' tästä alta, jotta se tallentuu globaaliin visualObj-muuttujaan
+    // 3. Piirretään nuotit (Huom: visualObj on globaali, ei 'const' tähän!)
     visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
         responsive: 'resize',
-        paddingbottom: 30 // Tärkeä tila huuliharpputablatureille [cite: 2026-03-22]
+        paddingbottom: 35 
     })[0];
+
+        // 4. Haetaan liukusäätimen (sliderin) senhetkinen arvo
+    const currentSliderValue = document.getElementById('tempoRange').value;
     
-    if (ABCJS.synth.supportsAudio()) {
-        const synth = new ABCJS.synth.CreateSynth();
-        
-        synth.init({ 
-            visualObj: visualObj,
-            audioContext: new (window.AudioContext || window.webkitAudioContext)() 
-        })
-        .then(function() {
-            // Käytetään globaalia synthControlia
-            if (!synthControl) {
-                synthControl = new ABCJS.synth.SynthController();
-            }
-            
-            synthControl.load("#audio-controls", null, {
-                displayRestart: true,
-                displayPlay: true,
-                displayProgress: true,
-                displayWarp: true
-            });
-            
-            // Haetaan nykyinen tempo liukusäätimestä
-            const currentBpm = parseInt(document.getElementById('tempoRange').value) || 100;
-            return synthControl.setTune(visualObj, false, { bpm: currentBpm });
-        })
-        .catch(function(error) {
-            console.warn("Audio-ongelma:", error);
-        });
-    }
+    // 5. Kutsutaan uutta changeTempo-funktiota, joka hoitaa audion alustuksen
+    changeTempo(currentSliderValue);
     
+    // 6. Skrollataan alas nuotteihin
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 };
+    
+   
             list.appendChild(div);
         });
 
