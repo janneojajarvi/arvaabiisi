@@ -55,6 +55,31 @@ function getPitchValue(acc, note, oct) {
     return p;
 }
 
+function playSingleNote(noteAbc) {
+    if (!ABCJS.synth.supportsAudio()) return;
+
+    // Luodaan lyhyt ABC-pätkä yhdelle nuotille
+    // Käytetään oletusasetuksia nopeaan toistoon
+    const singleNoteVisual = ABCJS.renderAbc("hidden-paper", "L:1/4\n" + noteAbc, { style: "display:none" })[0];
+    
+    const midiContext = new (window.AudioContext || window.webkitAudioContext)();
+    const synth = new ABCJS.synth.CreateSynth();
+
+    synth.init({
+        visualObj: singleNoteVisual,
+        audioContext: midiContext
+    }).then(() => {
+        return synth.prime();
+    }).then(() => {
+        synth.start();
+        // Pysäytetään ja suljetaan context lyhyen ajan kuluttua (esim. 500ms)
+        setTimeout(() => {
+            synth.stop();
+            if (midiContext.state !== 'closed') midiContext.close();
+        }, 500);
+    }).catch(err => console.warn("Nuotin soitto epäonnistui:", err));
+}
+
 function getFingerprint(abc) {
     if (!abc) return "";
     abc = abc.replace(/[><]/g, " ");
@@ -431,6 +456,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.note-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const note = btn.getAttribute('data-note');
+            // --- UUSI OSA: SOITETAAN SÄVEL ---
+        // Muodostetaan nuotti etumerkillä, jotta se kuulostaa oikealta
+        const noteToPlay = selectedAccidental + note;
+        playSingleNote(noteToPlay);
+        // ---------------------------------
             let dur = selectedDuration;
             
             if (isDottedMode && note !== 'z') {
