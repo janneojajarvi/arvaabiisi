@@ -540,7 +540,7 @@ function handleSearch() {
             });
             abcEditor.focus();
         });
-    }
+    
     
     // 9. Tyhjennys
     const clearBtn = document.getElementById('clearSearch');
