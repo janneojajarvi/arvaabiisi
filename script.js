@@ -373,26 +373,53 @@ function handleSearch() {
         // 1. Tallennetaan valittu ABC globaaliin muuttujaan
         currentAbc = tune.abc;
         
-        // 2. Valmistellaan ABC
+        // 2. Valmistellaan ABC (varmistetaan oletustempo)
         const abcWithTempo = currentAbc.includes("Q:") ? currentAbc : "Q:100\n" + currentAbc;
         
-        // 3. Piirretään nuotit
+        // 3. Piirretään nuotit (Huom: visualObj on globaali)
         visualObj = ABCJS.renderAbc("paper", abcWithTempo, { 
             responsive: 'resize',
             paddingbottom: 35 
         })[0];
 
-        // 4. Haetaan liukusäätimen arvo
-        const currentSliderValue = document.getElementById('tempoRange').value;
-
-        // --- TÄMÄ PUUTTUI: TUODAAN SOITIN NÄKYVIIN ---
+        // 4. Tuodaan soitin-kontainer näkyviin
         const audioContainer = document.getElementById('audio-controls');
         if (audioContainer) {
             audioContainer.style.display = 'block';
+            audioContainer.innerHTML = ""; // Tyhjennetään vanha soitin
         }
-        
-        // 5. Alustetaan audio
-        changeTempo(currentSliderValue);
+
+        // 5. Alustetaan audio Pitkistool-tyyliin
+        if (ABCJS.synth.supportsAudio()) {
+            // Käytetään yhtä globaalia AudioContextia
+            if (!window.myAudioContext) {
+                window.myAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const synth = new ABCJS.synth.CreateSynth();
+            synth.init({ 
+                visualObj: visualObj,
+                audioContext: window.myAudioContext 
+            }).then(function() {
+                if (!synthControl) {
+                    synthControl = new ABCJS.synth.SynthController();
+                }
+                
+                // Ladataan ohjain käyttöliittymään
+                synthControl.load("#audio-controls", null, {
+                    displayRestart: true,
+                    displayPlay: true,
+                    displayProgress: true,
+                    displayWarp: true
+                });
+                
+                // Haetaan sliderin arvo ja asetetaan se heti soittimeen
+                const currentSliderValue = document.getElementById('tempoRange').value;
+                return synthControl.setTune(visualObj, false, { bpm: parseInt(currentSliderValue) });
+            }).catch(function(err) {
+                console.warn("Audioalustus epäonnistui:", err);
+            });
+        }
         
         // 6. Skrollaus
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -400,13 +427,13 @@ function handleSearch() {
 
     // Tämän jälkeen listaan lisääminen ja silmukan sulkeminen
     list.appendChild(div);
-        });
+}); // Sulkee matches.slice.forEach
 
-        // Palautetaan nappi ennalleen
-        searchBtn.innerText = "Hae kappaleita";
-        searchBtn.disabled = false;
-    }, 50);
-}
+// Palautetaan nappi ennalleen
+searchBtn.innerText = "Hae kappaleita";
+searchBtn.disabled = false;
+}, 50); // Sulkee handleSearchin sisällä olevan setTimeoutin
+} // Sulkee handleSearch-funktion
 
 // --- TAPAHTUMAT ---
 
