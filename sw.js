@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arvaabiisi-v17'; // Päivitä aina versio, kun muutat ASSETS-listaa
+const CACHE_NAME = 'arvaabiisi-v18'; // Päivitä aina versio, kun muutat ASSETS-listaa
 
 const ASSETS = [
   './',
@@ -31,6 +31,7 @@ const ASSETS = [
   './folkwikiSet1.js',
   './folkwikiSet2.js',
   './folkwikiSet3.js',
+  './folkwikiExtra.js',
   './fsfolkdiktning01.js',
   './fsfolkdiktning02.js',
   './extrasetti5.js',
