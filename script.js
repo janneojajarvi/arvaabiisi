@@ -82,10 +82,17 @@ function playSingleNote(noteAbc) {
 
 function getFingerprint(abc) {
     if (!abc) return "";
+    
+    // 1. KORJAUS: Poistetaan ensin korusävelet kokonaan (koko aaltosulku ja sen sisältö)
+    abc = abc.replace(/\{[^}]*\}/g, "");
+    
+    // 2. KORJAUS: Poistetaan koristemerkit kuten trillit (T) ja rollit (~)
+    abc = abc.replace(/[T~]/g, "");
+
+    // 3. Poistetaan sointusulut, kertausmerkit yms. (Huom: {} poistettu tästä listasta)
     abc = abc.replace(/[><]/g, " ");
-    // Poistetaan kertausmerkit (:), hakatut sulut ([ ja ]) sekä koristenuottien merkit ({ ja })
-// Tämä varmistaa, että regex lukee vain nuotit ja tahtiviivat
-abc = abc.replace(/[:\[\]{}]/g, "");
+    abc = abc.replace(/[:\[\]]/g, "");
+
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
@@ -112,7 +119,9 @@ abc = abc.replace(/[:\[\]{}]/g, "");
         for (let i = 0; i < Math.abs(sharpCount); i++) keyRules[flatsOrder[i]] = '_';
     }
 
-    let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "").replace(/\{[^}]*\}/g, "");
+    let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "");
+    
+    // Tämä regex ohittaa välilyönnit automaattisesti!
     const regex = /([|])|([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
     
     let notes = [];
