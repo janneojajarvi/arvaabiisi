@@ -82,17 +82,8 @@ function playSingleNote(noteAbc) {
 
 function getFingerprint(abc) {
     if (!abc) return "";
-    
-    // 1. KORJAUS: Poistetaan ensin korusävelet kokonaan (koko aaltosulku ja sen sisältö)
-    abc = abc.replace(/\{[^}]*\}/g, "");
-    
-    // 2. KORJAUS: Poistetaan koristemerkit kuten trillit (T) ja rollit (~)
-    abc = abc.replace(/[T~]/g, "");
 
-    // 3. Poistetaan sointusulut, kertausmerkit yms. (Huom: {} poistettu tästä listasta)
-    abc = abc.replace(/[><]/g, " ");
-    abc = abc.replace(/[:\[\]]/g, "");
-
+    // 1. ETSITÄÄN SÄVELLAJI ENSIN (ennen mitään siivousta!)
     const keyMatch = abc.match(/^K:\s*([A-G][#b]?)\s*([A-Za-z]*)/m);
     let root = keyMatch ? keyMatch[1] : "C";
     let mode = keyMatch && keyMatch[2] ? keyMatch[2].toLowerCase() : "maj";
@@ -119,14 +110,49 @@ function getFingerprint(abc) {
         for (let i = 0; i < Math.abs(sharpCount); i++) keyRules[flatsOrder[i]] = '_';
     }
 
-    let clean = abc.replace(/^[A-Z]:.*/gm, "").replace(/"[^"]*"/g, "");
+    // 2. NYT SIIVOTAAN TEKSTI (järjestys on kriittinen)
+    let clean = abc;
     
-    // Tämä regex ohittaa välilyönnit automaattisesti!
+    // Poistetaan %-alkuiset kommentit ja direktiivit (esim. %%abc-charset utf-8)
+    clean = clean.replace(/^\s*%.*$/gm, "");
+    
+    // Poistetaan ABC-otsikkorivit (K:, X:, T:, w: jne.)
+    clean = clean.replace(/^\s*[a-zA-Z]:.*$/gm, "");
+    
+    // Poistetaan kitarasoinnut ("G", "Am")
+    clean = clean.replace(/"[^"]*"/g, "");
+    
+    // Poistetaan korusävelet
+    clean = clean.replace(/\{[^}]*\}/g, "");
+    
+    // Poistetaan trillit, rollit, dynamiikkamerkit ja kaaret
+    clean = clean.replace(/[T~.!+()]/g, "");
+    
+    // Poistetaan loput sotkut kuten sointusulut ja kertausmerkit (jätetään tahtiviiva | )
+    clean = clean.replace(/[><:\[\]]/g, "");
+
+    // 3. LUETAAN NUOTIT
     const regex = /([|])|([\^_=]?)([A-Ga-gHh])([,']*)([0-9/]*)/g;
-    
     let notes = [];
     let barAccidentals = {}; 
     let match;
+
+    // Sisäinen apufunktio nuotin korkeudelle
+    function getPitchValue(acc, note, oct) {
+        // Lisätty H (pohjoismainen merkintätapa B:lle)
+        const basePitches = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11, 'H': 11 };
+        let p = basePitches[note.toUpperCase()];
+        if (note === note.toLowerCase()) p += 12;
+        if (oct) {
+            for (let char of oct) {
+                if (char === ',') p -= 12;
+                if (char === "'") p += 12;
+            }
+        }
+        if (acc === '^') p += 1;
+        if (acc === '_') p -= 1;
+        return p;
+    }
 
     while ((match = regex.exec(clean)) !== null) {
         if (match[1] === '|') {
@@ -134,10 +160,12 @@ function getFingerprint(abc) {
             continue;
         }
         let acc = match[2];
-        const note = match[3];
+        let note = match[3];
         const oct = match[4];
         const durStr = match[5];
-        const noteName = note.toUpperCase();
+        
+        let noteName = note.toUpperCase();
+        if (noteName === 'H') noteName = 'B'; // Normalisoidaan H vastaamaan B:tä
 
         if (acc) {
             if (acc === "=") acc = "";
@@ -159,6 +187,7 @@ function getFingerprint(abc) {
         notes.push({ pitch, duration });
     }
 
+    // 4. LASKETAAN SORMENJÄLKI
     if (notes.length < 2) return "";
     let fp = [];
     for (let i = 1; i < notes.length; i++) {
@@ -169,6 +198,7 @@ function getFingerprint(abc) {
     }
     return "|" + fp.join("|") + "|";
 }
+
 
 function toggleManualEdit() {
     const textarea = document.getElementById('searchQuery');
