@@ -9,7 +9,8 @@ const urls = [
     "folkwikiSet3.js", "fsfolkdiktning01.js", "esavelmat_kansantanssit.js", 
     "esavelmat_kjs.js", "esavelmat_rs1.js", "esavelmat_rs2.js", "esavelmat_hs1.js",
     "esavelmat_ls1.js", "esavelmat_ls2.js", "esavelmat_ls3.js", "esavelmat_ls4.js",
-    "suomitest3.js", "fsfolkdiktning02.js", "FinnishTunes.js", "FinnishTunes2.js", 
+    "suomitest3.js", "fsfolkdiktning02.js", "FinnishTunes.js", "FinnishTunes2.js",  "melnets_part1.js",  "melnets_part2.js",  "melnets_part3.js",
+     "melnets_part4.js",  "melnets_part5.js",  "melnets_part6.js",  "melnets_part7.js",  "melnets_part8.js",
     "swedish2.js", "norway1.js", "dansk1.js", "dansk2.js", "dansk3.js", "abctransposer.js", "nordbeck.js", "folkwikiExtra.js", "extrasetti5.js"
 ];
 
